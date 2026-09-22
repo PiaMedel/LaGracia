@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Importar datos{% endblock %}
+{% block content %}
+  <h1>Importar datos históricos</h1>
+  <p class="subtitle">Los productos y materias primas mencionados en el CSV deben existir previamente en el sistema.</p>
+
+  <div class="card">
+    <h2>Ventas históricas</h2>
+    <p style="color:var(--muted); font-size:13px">Columnas requeridas: <code>fecha,producto,cantidad,precio,cliente_o_canal</code></p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="tipo" value="ventas">
+      <input type="file" name="archivo" accept=".csv" required>
+      <button class="btn small" type="submit">Importar ventas</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Compras históricas</h2>
+    <p style="color:var(--muted); font-size:13px">Columnas requeridas: <code>fecha,materia_prima,cantidad,costo,proveedor</code></p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="tipo" value="compras">
+      <input type="file" name="archivo" accept=".csv" required>
+      <button class="btn small" type="submit">Importar compras</button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Receta de {{ producto.nombre }}{% endblock %}
+{% block content %}
+  <h1>Receta — {{ producto.nombre }}</h1>
+  {% if margen.costo_unitario is not none %}
+  <p class="subtitle">Costo unitario actual: <strong>${{ '{:,.0f}'.format(margen.costo_unitario) }}</strong>
+    — Margen: <strong>${{ '{:,.0f}'.format(margen.margen_unitario) }} ({{ margen.margen_pct }}%)</strong></p>
+  {% endif %}
+  <div class="card">
+    <form method="post" id="recipe-form">
+      <div class="formgrid" style="margin-bottom:16px">
+        <div><label>Rendimiento (unidades por tanda)</label>
+          <input type="number" step="0.01" name="rendimiento" required value="{{ recipe.rendimiento if recipe else 1 }}"></div>
+      </div>
+      <h2>Ingredientes</h2>
+      <p class="subtitle" style="margin-top:-8px">Cada ingrediente puede ser una materia prima directa o una pre-preparación (semi-elaborado congelado).</p>
+      <div id="rows">
+        {% if recipe %}
+          {% for item in recipe.items %}
+          <div class="recipe-row" style="grid-template-columns:1fr 2fr 1fr auto">
+            <select class="ingredient-type" onchange="updateOptions(this)">
+              <option value="material" {% if item.ingredient_type=='material' %}selected{% endif %}>Materia prima</option>
+              <option value="preparation" {% if item.ingredient_type=='preparation' %}selected{% endif %}>Pre-preparación</option>
+            </select>
+            <select class="ingredient-id" name="ingredient_id">
+              {% if item.ingredient_type == 'material' %}
+                {% for m in materiales %}<option value="{{ m.id }}" data-kind="material" {% if m.id==item.raw_material_id %}selected{% endif %}>{{ m.nombre }} ({{ m.unidad_medida }})</option>{% endfor %}
+                {% for pr in preparaciones %}<option value="{{ pr.id }}" data-kind="preparation" style="display:none">{{ pr.nombre }} ({{ pr.unidad_medida }})</option>{% endfor %}
+              {% else %}
+                {% for m in materiales %}<option value="{{ m.id }}" data-kind="material" style="display:none">{{ m.nombre }} ({{ m.unidad_medida }})</option>{% endfor %}
+                {% for pr in preparaciones %}<option value="{{ pr.id }}" data-kind="preparation" {% if pr.id==item.preparation_id %}selected{% endif %}>{{ pr.nombre }} ({{ pr.unidad_medida }})</option>{% endfor %}
+              {% endif %}
+            </select>
+            <input type="hidden" name="ingredient_type" class="hidden-type" value="{{ item.ingredient_type }}">
+            <input type="number" step="0.01" name="cantidad" value="{{ item.cantidad }}" placeholder="Cantidad">
+            <button type="button" class="btn small secondary" onclick="this.parentElement.remove()">Quitar</button>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <button type="button" class="btn small secondary" onclick="addRow()">+ Ingrediente</button>
+      <div style="margin-top:16px"><button class="btn" type="submit">Guardar receta</button></div>
+    </form>
+  </div>
+
+  <template id="row-template">
+    <div class="recipe-row" style="grid-template-columns:1fr 2fr 1fr auto">
+      <select class="ingredient-type" onchange="updateOptions(this)">
+        <option value="material">Materia prima</option>
+        <option value="preparation">Pre-preparación</option>
+      </select>
+      <select class="ingredient-id" name="ingredient_id">
+        {% for m in materiales %}<option value="{{ m.id }}" data-kind="material">{{ m.nombre }} ({{ m.unidad_medida }})</option>{% endfor %}
+        {% for pr in preparaciones %}<option value="{{ pr.id }}" data-kind="preparation" style="display:none">{{ pr.nombre }} ({{ pr.unidad_medida }})</option>{% endfor %}
+      </select>
+      <input type="hidden" name="ingredient_type" class="hidden-type" value="material">
+      <input type="number" step="0.01" name="cantidad" placeholder="Cantidad">
+      <button type="button" class="btn small secondary" onclick="this.parentElement.remove()">Quitar</button>
+    </div>
+  </template>
+  <script>
+    function addRow(){
+      const tpl = document.getElementById('row-template').content.cloneNode(true);
+      document.getElementById('rows').appendChild(tpl);
+    }
+    function updateOptions(select){
+      const row = select.closest('.recipe-row');
+      const kind = select.value;
+      row.querySelector('.hidden-type').value = kind;
+      const idSelect = row.querySelector('.ingredient-id');
+      const options = idSelect.querySelectorAll('option');
+      let firstVisible = null;
+      let currentStillValid = false;
+      options.forEach(o => {
+        if(o.dataset.kind === kind){
+          o.style.display = '';
+          if(!firstVisible) firstVisible = o;
+          if(o.value === idSelect.value) currentStillValid = true;
+        } else {
+          o.style.display = 'none';
+        }
+      });
+      if(!currentStillValid && firstVisible) idSelect.value = firstVisible.value;
+    }
+    // Sincroniza las opciones visibles al cargar la página (para filas ya guardadas)
+    document.querySelectorAll('.ingredient-type').forEach(sel => updateOptions(sel));
+  </script>
+{% endblock %}

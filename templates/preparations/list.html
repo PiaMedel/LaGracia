@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Pre-preparaciones{% endblock %}
+{% block content %}
+  <h1>Pre-preparaciones (semi-elaborados congelados)</h1>
+  <p class="subtitle">
+    <a class="btn" href="{{ url_for('preparations.nueva') }}">+ Nueva pre-preparación</a>
+    <a class="btn secondary" href="{{ url_for('preparations.registrar') }}">Registrar pre-preparación hecha</a>
+  </p>
+  <div class="card">
+    <table>
+      <tr><th>Nombre</th><th>Stock</th><th>Costo u.</th><th>Vida útil</th><th></th></tr>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.prep.nombre }}{% if f.alerta %} <span class="badge {{ f.alerta.nivel }}">{{ f.alerta.texto }}</span>{% endif %}</td>
+        <td>{{ f.stock|round(2) }} {{ f.prep.unidad_medida }}</td>
+        <td>{% if f.costo_unitario is not none %}${{ '{:,.0f}'.format(f.costo_unitario) }}{% else %}<span class="empty">sin receta</span>{% endif %}</td>
+        <td>{{ f.prep.vida_util_congelada_dias or '—' }}d congelada / {{ f.prep.vida_util_descongelada_dias or '—' }}d descongelada</td>
+        <td class="pill-actions">
+          <a class="btn small secondary" href="{{ url_for('preparations.editar', prep_id=f.prep.id) }}">Editar</a>
+          <a class="btn small secondary" href="{{ url_for('preparations.receta', prep_id=f.prep.id) }}">Receta</a>
+          <a class="btn small secondary" href="{{ url_for('preparations.movimientos', prep_id=f.prep.id) }}">Movimientos</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

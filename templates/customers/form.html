@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if cliente else 'Nuevo' }} cliente{% endblock %}
+{% block content %}
+  <h1>{{ 'Editar' if cliente else 'Nuevo' }} cliente B2B</h1>
+  <div class="card">
+    <form method="post" class="formgrid">
+      <div><label>Nombre</label><input name="nombre" required value="{{ cliente.nombre if cliente else '' }}"></div>
+      <div><label>Tipo</label>
+        <select name="tipo">{% for t in tipos %}<option value="{{ t }}" {% if cliente and cliente.tipo==t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+      </div>
+      <div><label>Contacto</label><input name="contacto" value="{{ cliente.contacto if cliente else '' }}"></div>
+      <div><label>WhatsApp (con código de país, sin +, ej 56912345678)</label><input name="whatsapp" value="{{ cliente.whatsapp if cliente else '' }}"></div>
+      <div><label>Estado</label>
+        <select name="estado"><option value="Activo" {% if cliente and cliente.estado=='Activo' %}selected{% endif %}>Activo</option><option value="Inactivo" {% if cliente and cliente.estado=='Inactivo' %}selected{% endif %}>Inactivo</option></select>
+      </div>
+      <div><label>Frecuencia habitual (días)</label><input type="number" name="frecuencia_habitual_dias" value="{{ cliente.frecuencia_habitual_dias if cliente else '' }}"></div>
+      <div><label>Día habitual</label><input name="dia_habitual" value="{{ cliente.dia_habitual if cliente else '' }}"></div>
+      <div><label>Producto habitual</label>
+        <select name="producto_habitual_id"><option value="">—</option>
+          {% for p in productos %}<option value="{{ p.id }}" {% if cliente and cliente.producto_habitual_id==p.id %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Cantidad promedio</label><input type="number" step="0.01" name="cantidad_promedio" value="{{ cliente.cantidad_promedio if cliente else '' }}"></div>
+      <div><label>Precio acordado</label><input type="number" step="0.01" name="precio_acordado" value="{{ cliente.precio_acordado if cliente else '' }}"></div>
+      <div><label>Último pedido</label><input type="date" name="ultimo_pedido" value="{{ cliente.ultimo_pedido.isoformat() if cliente and cliente.ultimo_pedido else '' }}"></div>
+      <div class="full"><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </div>
+{% endblock %}

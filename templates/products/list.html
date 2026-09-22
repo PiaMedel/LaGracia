@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Productos{% endblock %}
+{% block content %}
+  <h1>Productos</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('products.nuevo') }}">+ Nuevo producto</a></p>
+  <div class="card">
+    <table>
+      <tr><th>Nombre</th><th>Estado</th><th>Precio</th><th>Costo u.</th><th>Margen</th><th>Stock</th><th></th></tr>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.product.nombre }}</td>
+        <td>
+          {% set cls = {'GANADOR':'verde','POTENCIAL':'amarillo','REVISAR':'naranja','PAUSADO':'gris'}[f.product.estado] %}
+          <span class="badge {{ cls }}">{{ f.product.estado }}</span>
+        </td>
+        <td>${{ '{:,.0f}'.format(f.product.precio_venta) }}</td>
+        <td>{% if f.margen.costo_unitario is not none %}${{ '{:,.0f}'.format(f.margen.costo_unitario) }}{% else %}<span class="empty">sin receta</span>{% endif %}</td>
+        <td>{% if f.margen.margen_pct is not none %}{{ f.margen.margen_pct }}%{% else %}—{% endif %}</td>
+        <td>{{ f.stock|round(1) }} {{ f.product.unidad_venta }}</td>
+        <td class="pill-actions">
+          <a class="btn small secondary" href="{{ url_for('products.editar', product_id=f.product.id) }}">Editar</a>
+          <a class="btn small secondary" href="{{ url_for('products.receta', product_id=f.product.id) }}">Receta</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

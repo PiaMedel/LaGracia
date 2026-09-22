@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Ventas{% endblock %}
+{% block content %}
+  <h1>Ventas</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('sales.nueva') }}">+ Registrar venta</a></p>
+  <div class="card">
+    {% if ventas %}
+    <table>
+      <tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Canal</th><th>Cliente</th></tr>
+      {% for v in ventas %}
+      <tr>
+        <td>{{ v.fecha.strftime('%d-%m-%Y') }}</td>
+        <td>{{ v.product.nombre }}</td>
+        <td>{{ v.cantidad }}</td>
+        <td>${{ '{:,.0f}'.format(v.precio) }}</td>
+        <td>{{ v.canal }}</td>
+        <td>{{ v.customer.nombre if v.customer else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin ventas registradas.</p>
+    {% endif %}
+  </div>
+{% endblock %}

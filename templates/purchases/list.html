@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Compras{% endblock %}
+{% block content %}
+  <h1>Compras</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('purchases.registrar') }}">+ Registrar compra</a></p>
+
+  {% if alertas_hormiga %}
+  <div class="card">
+    <h2>🟡 Alertas de compra hormiga</h2>
+    <ul class="alert-list">
+      {% for a in alertas_hormiga %}
+      <li>{{ a.materia_prima }}: {{ a.compras_en_periodo }} compras en {{ a.ventana_dias }} días.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Plan de compras sugerido</h2>
+    {% if sugerencias %}
+    <table>
+      <tr><th>Materia prima</th><th>Necesidad</th><th>Stock</th><th>Punto reposición</th><th>Comprar</th></tr>
+      {% for s in sugerencias %}
+      <tr>
+        <td>{{ s.materia_prima }}</td>
+        <td>{{ s.necesidad_proyectada|round(2) }} {{ s.unidad_medida }}</td>
+        <td>{{ s.stock_actual|round(2) }} {{ s.unidad_medida }}</td>
+        <td>{{ s.punto_reposicion|round(2) }} {{ s.unidad_medida }} {% if s.bajo_punto_reposicion %}<span class="badge rojo">bajo</span>{% endif %}</td>
+        <td><strong>{{ s.comprar|round(2) }} {{ s.unidad_medida }}</strong></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">No hay compras urgentes por ahora.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Historial de compras</h2>
+    {% if historial %}
+    <table>
+      <tr><th>Fecha</th><th>Materia prima</th><th>Cantidad</th><th>Costo</th><th>Proveedor</th></tr>
+      {% for h in historial %}
+      <tr>
+        <td>{{ h.fecha.strftime('%d-%m-%Y') }}</td>
+        <td>{{ h.raw_material.nombre }}</td>
+        <td>{{ h.cantidad }} {{ h.raw_material.unidad_medida }}</td>
+        <td>{% if h.costo_total %}${{ '{:,.0f}'.format(h.costo_total) }}{% else %}—{% endif %}</td>
+        <td>{{ h.proveedor or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin compras registradas.</p>
+    {% endif %}
+  </div>
+{% endblock %}

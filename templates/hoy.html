@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}La Gracia — Hoy{% endblock %}
+{% block content %}
+  <h1>Buenos días 👋</h1>
+  <p class="subtitle">{{ hoy_fecha.strftime('%A %d de %B, %Y') }}</p>
+
+  <div class="resumen-grid">
+    <div class="resumen-item"><div class="num">{{ data.resumen.producir_unidades|round(0)|int }}</div><div class="lbl">🧁 Producir (u.)</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.preparar_items }}</div><div class="lbl">🧊 Pre-preparar</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.comprar_items }}</div><div class="lbl">🛒 Comprar (ítems)</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.contactar_clientes }}</div><div class="lbl">📲 Contactar</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.alertas }}</div><div class="lbl">⚠️ Alertas</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.stock_critico }}</div><div class="lbl">📦 Stock crítico</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.merma_pct }}%</div><div class="lbl">♻️ Merma</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Alertas</h2>
+    {% if data.alertas %}
+      <ul class="alert-list">
+        {% for a in data.alertas %}
+          <li><span class="badge {{ a.nivel }}">{{ {'rojo':'🔴','naranja':'🟠','amarillo':'🟡'}[a.nivel] }}</span> {{ a.texto }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">Sin alertas por ahora.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Producción sugerida (próximos días)</h2>
+    {% if data.produccion %}
+    <table>
+      <tr><th>Producto</th><th>Stock</th><th>Demanda próxima</th><th>Confirmado</th><th>Sugerencia</th><th></th></tr>
+      {% for r in data.produccion %}
+      <tr>
+        <td>{{ r.producto }}</td>
+        <td>{{ r.stock|round(1) }}</td>
+        <td>{{ r.demanda_proxima|round(1) }}</td>
+        <td>{{ r.confirmado|round(1) }}</td>
+        <td><strong>{{ r.sugerencia|int }}</strong></td>
+        <td><a class="btn small" href="{{ url_for('production.listar') }}">Planificar</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">No hay productos activos con receta configurada.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Pre-preparar (congelar) hoy</h2>
+    {% if data.preparacion %}
+    <table>
+      <tr><th>Preparación</th><th>Stock</th><th>Necesidad proyectada</th><th>Sugerencia</th><th></th></tr>
+      {% for p in data.preparacion %}
+      <tr>
+        <td>{{ p.preparacion }}{% if p.alerta_vencimiento %} <span class="badge {{ p.alerta_vencimiento.nivel }}">{{ p.alerta_vencimiento.texto }}</span>{% endif %}</td>
+        <td>{{ p.stock_actual|round(1) }}</td>
+        <td>{{ p.necesidad_proyectada|round(1) }}</td>
+        <td><strong>{{ p.produccion_sugerida|int }}</strong></td>
+        <td><a class="btn small" href="{{ url_for('preparations.registrar') }}">Pre-preparar</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">No hace falta pre-preparar nada por ahora.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Comprar hoy</h2>
+    {% if data.compras %}
+    <table>
+      <tr><th>Materia prima</th><th>Necesidad</th><th>Stock</th><th>Comprar</th><th></th></tr>
+      {% for c in data.compras %}
+      <tr>
+        <td>{{ c.materia_prima }}</td>
+        <td>{{ c.necesidad_proyectada|round(1) }} {{ c.unidad_medida }}</td>
+        <td>{{ c.stock_actual|round(1) }} {{ c.unidad_medida }}</td>
+        <td><strong>{{ c.comprar|round(1) }} {{ c.unidad_medida }}</strong></td>
+        <td><a class="btn small" href="{{ url_for('purchases.registrar') }}">Registrar</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">No hay compras urgentes.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Contactar hoy (B2B)</h2>
+    {% set pendientes = data.b2b|selectattr('urgencia', 'in', ['hoy','atrasado'])|list %}
+    {% if pendientes %}
+    <table>
+      <tr><th>Cliente</th><th>Estado</th><th>Producto habitual</th><th></th></tr>
+      {% for b in pendientes %}
+      <tr>
+        <td>{{ b.cliente }}</td>
+        <td>
+          {% if b.urgencia == 'atrasado' %}<span class="badge rojo">Atrasado {{ b.dias_atraso }}d</span>
+          {% else %}<span class="badge naranja">Hoy</span>{% endif %}
+        </td>
+        <td>{{ b.producto_habitual or '—' }} {% if b.cantidad_promedio %}(~{{ b.cantidad_promedio|round(0)|int }}){% endif %}</td>
+        <td class="pill-actions">
+          {% if b.whatsapp %}
+          <a class="btn small" target="_blank"
+             href="https://wa.me/{{ b.whatsapp|replace('+','')|replace(' ','') }}?text={{ b.mensaje_whatsapp|urlencode }}">
+             CONTACTAR
+          </a>
+          {% else %}
+          <form method="post" action="{{ url_for('dashboard.api_contactar', customer_id=b.customer_id) }}">
+            <button class="btn small" type="submit">CONTACTAR</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('dashboard.api_posponer', customer_id=b.customer_id, dias=3) }}">
+            <button class="btn small secondary" type="submit">Posponer 3d</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Nadie que contactar hoy.</p>
+    {% endif %}
+  </div>
+{% endblock %}

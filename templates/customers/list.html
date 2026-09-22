@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Clientes B2B{% endblock %}
+{% block content %}
+  <h1>Clientes B2B</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('customers.nuevo') }}">+ Nuevo cliente</a></p>
+  <div class="card">
+    <table>
+      <tr><th>Nombre</th><th>Tipo</th><th>Frecuencia</th><th>Último pedido</th><th>Estado</th><th></th></tr>
+      {% for c in clientes %}
+      <tr>
+        <td>{{ c.nombre }}</td>
+        <td>{{ c.tipo }}</td>
+        <td>{{ c.frecuencia_habitual_dias }} días</td>
+        <td>{{ c.ultimo_pedido.strftime('%d-%m-%Y') if c.ultimo_pedido else '—' }}</td>
+        <td><span class="badge {{ 'verde' if c.estado=='Activo' else 'gris' }}">{{ c.estado }}</span></td>
+        <td><a class="btn small secondary" href="{{ url_for('customers.editar', customer_id=c.id) }}">Editar</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

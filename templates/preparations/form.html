@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if prep else 'Nueva' }} pre-preparación{% endblock %}
+{% block content %}
+  <h1>{{ 'Editar' if prep else 'Nueva' }} pre-preparación</h1>
+  <div class="card">
+    <form method="post" class="formgrid">
+      <div><label>Nombre</label><input name="nombre" required value="{{ prep.nombre if prep else '' }}"></div>
+      <div><label>Unidad de medida</label><input name="unidad_medida" value="{{ prep.unidad_medida if prep else 'kg' }}"></div>
+      <div><label>Stock de seguridad</label><input type="number" step="0.01" name="stock_seguridad" value="{{ prep.stock_seguridad if prep else 0 }}"></div>
+      <div><label>Vida útil congelada (días)</label><input type="number" name="vida_util_congelada_dias" value="{{ prep.vida_util_congelada_dias if prep else '' }}"></div>
+      <div><label>Vida útil descongelada (días)</label><input type="number" name="vida_util_descongelada_dias" value="{{ prep.vida_util_descongelada_dias if prep else '' }}"></div>
+      {% if not prep %}
+      <div><label>Stock inicial</label><input type="number" step="0.01" name="stock_inicial" value="0"></div>
+      {% else %}
+      <div><label>Activa</label>
+        <select name="activo"><option value="1" {% if prep.activo %}selected{% endif %}>Sí</option><option value="" {% if not prep.activo %}selected{% endif %}>No</option></select>
+      </div>
+      {% endif %}
+      <div class="full"><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Portafolio{% endblock %}
+{% block content %}
+  <h1>Diagnóstico de portafolio</h1>
+  <p class="subtitle">Clasificación sugerida según ventas, margen y merma. No cambia el estado del producto automáticamente — revísalo y ajústalo en el módulo Productos si corresponde.</p>
+  <div class="card">
+    <table>
+      <tr><th>Producto</th><th>Estado actual</th><th>Sugerido</th><th>Ventas periodo</th><th>Margen</th><th>Merma</th><th>Motivo</th></tr>
+      {% for c in clasificacion %}
+      <tr>
+        <td>{{ c.producto }}</td>
+        <td><span class="badge {{ {'GANADOR':'verde','POTENCIAL':'amarillo','REVISAR':'naranja','PAUSADO':'gris'}[c.estado_actual] }}">{{ c.estado_actual }}</span></td>
+        <td>
+          <span class="badge {{ {'GANADOR':'verde','POTENCIAL':'amarillo','REVISAR':'naranja','PAUSADO':'gris'}[c.estado_sugerido] }}">{{ c.estado_sugerido }}</span>
+          {% if not c.coincide %}<span title="Distinto al estado actual">⚠️</span>{% endif %}
+        </td>
+        <td>{{ c.ventas_periodo|round(0)|int }} ({{ c.nivel_ventas }})</td>
+        <td>{% if c.margen_pct is not none %}{{ c.margen_pct }}%{% else %}—{% endif %}</td>
+        <td>{{ c.merma_pct }}%</td>
+        <td style="color:var(--muted); font-size:13px">{{ c.razon }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

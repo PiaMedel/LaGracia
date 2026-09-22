@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Nuevo pedido{% endblock %}
+{% block content %}
+  <h1>Nuevo pedido</h1>
+  <div class="card">
+    <form method="post">
+      <div class="formgrid" style="margin-bottom:16px">
+        <div><label>Tipo</label>
+          <select name="tipo">{% for t in tipos %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
+        </div>
+        <div><label>Cliente</label>
+          <select name="customer_id"><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
+        </div>
+        <div><label>Fecha de entrega</label><input type="date" name="fecha_entrega" required></div>
+        <div><label>Estado</label>
+          <select name="estado">{% for e in estados %}<option value="{{ e }}">{{ e }}</option>{% endfor %}</select>
+        </div>
+        <div class="full"><label>Notas</label><input name="notas"></div>
+      </div>
+
+      <h2>Productos</h2>
+      <div id="rows">
+        <div class="recipe-row">
+          <select name="product_id">{% for p in productos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
+          <input type="number" step="0.01" name="cantidad" placeholder="Cantidad">
+          <input type="number" step="0.01" name="precio" placeholder="Precio (opcional)">
+        </div>
+      </div>
+      <button type="button" class="btn small secondary" onclick="addRow()">+ Producto</button>
+      <div style="margin-top:16px"><button class="btn" type="submit">Guardar pedido</button></div>
+    </form>
+  </div>
+
+  <template id="row-template">
+    <div class="recipe-row">
+      <select name="product_id">{% for p in productos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
+      <input type="number" step="0.01" name="cantidad" placeholder="Cantidad">
+      <input type="number" step="0.01" name="precio" placeholder="Precio (opcional)">
+    </div>
+  </template>
+  <script>
+    function addRow(){
+      const tpl = document.getElementById('row-template').content.cloneNode(true);
+      document.getElementById('rows').appendChild(tpl);
+    }
+  </script>
+{% endblock %}

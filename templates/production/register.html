@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Registrar producción{% endblock %}
+{% block content %}
+  <h1>Registrar producción real</h1>
+  <p class="subtitle">Al guardar, el sistema descuenta automáticamente los ingredientes según la receta y suma el stock del producto terminado.</p>
+  <div class="card">
+    <form method="post" class="formgrid">
+      <div>
+        <label>Producto</label>
+        <select name="product_id" required>
+          {% for p in productos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Cantidad producida</label><input type="number" step="0.01" name="cantidad_real" required></div>
+      <div class="full"><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </div>
+{% endblock %}

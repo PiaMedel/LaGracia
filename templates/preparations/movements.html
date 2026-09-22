@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Movimientos — {{ prep.nombre }}{% endblock %}
+{% block content %}
+  <h1>{{ prep.nombre }}</h1>
+  <div class="card">
+    <h2>Historial de movimientos</h2>
+    {% if historial %}
+    <table>
+      <tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Referencia</th></tr>
+      {% for m in historial %}
+      <tr>
+        <td>{{ m.fecha.strftime('%d-%m-%Y %H:%M') }}</td>
+        <td>{{ m.tipo_movimiento }}</td>
+        <td style="color:{{ 'var(--rojo)' if m.cantidad < 0 else 'var(--verde)' }}">{{ '%+.2f'|format(m.cantidad) }}</td>
+        <td>{{ m.referencia_tipo or '—' }} {{ m.referencia_id or '' }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin movimientos aún.</p>
+    {% endif %}
+  </div>
+{% endblock %}

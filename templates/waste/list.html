@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Mermas{% endblock %}
+{% block content %}
+  <h1>Mermas</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('waste.nueva') }}">+ Registrar merma</a></p>
+  <div class="card">
+    {% if mermas %}
+    <table>
+      <tr><th>Fecha</th><th>Item</th><th>Cantidad</th><th>Motivo</th></tr>
+      {% for m in mermas %}
+      <tr>
+        <td>{{ m.fecha.strftime('%d-%m-%Y') }}</td>
+        <td>{{ m.product.nombre if m.product else m.raw_material.nombre }}</td>
+        <td>{{ m.cantidad }}</td>
+        <td>{{ m.motivo }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin mermas registradas.</p>
+    {% endif %}
+  </div>
+{% endblock %}

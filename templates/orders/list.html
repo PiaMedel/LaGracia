@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Pedidos{% endblock %}
+{% block content %}
+  <h1>Pedidos</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('orders.nuevo') }}">+ Nuevo pedido</a></p>
+  <div class="card">
+    {% if pedidos %}
+    <table>
+      <tr><th>#</th><th>Cliente</th><th>Entrega</th><th>Items</th><th>Estado</th><th>Cambiar estado</th></tr>
+      {% for o in pedidos %}
+      <tr>
+        <td>{{ o.id }}</td>
+        <td>{{ o.customer.nombre if o.customer else '—' }}</td>
+        <td>{{ o.fecha_entrega.strftime('%d-%m-%Y') }}</td>
+        <td>{% for it in o.items %}{{ it.product.nombre }} ({{ it.cantidad }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+        <td>
+          {% set cls = {'Pendiente':'gris','Confirmado':'naranja','Producido':'amarillo','Entregado':'verde','Cancelado':'rojo'}[o.estado] %}
+          <span class="badge {{ cls }}">{{ o.estado }}</span>
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('orders.cambiar_estado', order_id=o.id) }}" style="display:flex; gap:6px">
+            <select name="estado">
+              {% for e in ['Pendiente','Confirmado','Producido','Entregado','Cancelado'] %}
+              <option value="{{ e }}" {% if o.estado==e %}selected{% endif %}>{{ e }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn small" type="submit">Actualizar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin pedidos registrados.</p>
+    {% endif %}
+  </div>
+{% endblock %}

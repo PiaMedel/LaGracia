@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Registrar venta{% endblock %}
+{% block content %}
+  <h1>Registrar venta</h1>
+  <div class="card">
+    <form method="post" class="formgrid">
+      <div>
+        <label>Producto</label>
+        <select name="product_id" required>
+          {% for p in productos %}<option value="{{ p.id }}" data-precio="{{ p.precio_venta }}">{{ p.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Cantidad</label><input type="number" step="0.01" name="cantidad" required></div>
+      <div><label>Precio unitario</label><input type="number" step="0.01" name="precio" required></div>
+      <div>
+        <label>Canal</label>
+        <select name="canal">{% for c in canales %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
+      </div>
+      <div>
+        <label>Cliente (opcional, B2B)</label>
+        <select name="customer_id"><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
+      </div>
+      <div class="full"><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </div>
+{% endblock %}

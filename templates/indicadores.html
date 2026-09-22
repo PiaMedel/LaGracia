@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Indicadores{% endblock %}
+{% block content %}
+  <h1>Indicadores</h1>
+
+  <div class="card">
+    <h2>Ventas</h2>
+    <div class="resumen-grid">
+      <div class="resumen-item"><div class="num">${{ '{:,.0f}'.format(data.ventas.hoy) }}</div><div class="lbl">Hoy</div></div>
+      <div class="resumen-item"><div class="num">${{ '{:,.0f}'.format(data.ventas.semana) }}</div><div class="lbl">Semana</div></div>
+      <div class="resumen-item"><div class="num">${{ '{:,.0f}'.format(data.ventas.mes) }}</div><div class="lbl">Mes</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Productos</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+      <div>
+        <h3 style="font-size:14px; color:var(--muted)">Más vendidos</h3>
+        <ul class="alert-list">{% for m in data.productos.mas_vendidos %}<li>{{ m.producto }} — {{ m.cantidad|round(0)|int }} u.</li>{% endfor %}</ul>
+      </div>
+      <div>
+        <h3 style="font-size:14px; color:var(--muted)">Menos vendidos</h3>
+        <ul class="alert-list">{% for m in data.productos.menos_vendidos %}<li>{{ m.producto }} — {{ m.cantidad|round(0)|int }} u.</li>{% endfor %}</ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Inventario bajo stock</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+      <div>
+        <h3 style="font-size:14px; color:var(--muted)">Productos</h3>
+        {% if data.inventario.productos_bajo_stock %}
+        <ul class="alert-list">{% for p in data.inventario.productos_bajo_stock %}<li>{{ p }}</li>{% endfor %}</ul>
+        {% else %}<p class="empty">Ninguno</p>{% endif %}
+      </div>
+      <div>
+        <h3 style="font-size:14px; color:var(--muted)">Materias primas</h3>
+        {% if data.inventario.materias_primas_bajo_stock %}
+        <ul class="alert-list">{% for m in data.inventario.materias_primas_bajo_stock %}<li>{{ m }}</li>{% endfor %}</ul>
+        {% else %}<p class="empty">Ninguna</p>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>B2B</h2>
+    <div class="resumen-grid">
+      <div class="resumen-item"><div class="num">{{ data.b2b.clientes_activos }}</div><div class="lbl">Activos</div></div>
+      <div class="resumen-item"><div class="num">{{ data.b2b.clientes_inactivos }}</div><div class="lbl">Inactivos</div></div>
+      <div class="resumen-item"><div class="num">{{ data.b2b.pedidos_confirmados }}</div><div class="lbl">Pedidos confirmados</div></div>
+      <div class="resumen-item"><div class="num">{{ data.b2b.por_contactar }}</div><div class="lbl">Por contactar</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Merma</h2>
+    {% if data.merma.detalle %}
+    <table>
+      <tr><th>Producto</th><th>Merma %</th><th>Producido</th><th>Merma</th></tr>
+      {% for d in data.merma.detalle %}
+      <tr><td>{{ d.producto }}</td><td>{{ d.merma_pct }}%</td><td>{{ d.total_producido }}</td><td>{{ d.total_merma }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin alertas de merma.</p>
+    {% endif %}
+  </div>
+{% endblock %}

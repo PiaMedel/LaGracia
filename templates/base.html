@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}La Gracia{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">🧁 La Gracia</div>
+    <nav>
+      <a href="{{ url_for('dashboard.hoy') }}">Hoy</a>
+      <a href="{{ url_for('production.listar') }}">Producción</a>
+      <a href="{{ url_for('preparations.listar') }}">Pre-preparaciones</a>
+      <a href="{{ url_for('purchases.listar') }}">Compras</a>
+      <a href="{{ url_for('inventory.listar') }}">Materias primas</a>
+      <a href="{{ url_for('products.listar') }}">Productos</a>
+      <a href="{{ url_for('sales.listar') }}">Ventas</a>
+      <a href="{{ url_for('orders.listar') }}">Pedidos</a>
+      <a href="{{ url_for('customers.listar') }}">Clientes B2B</a>
+      <a href="{{ url_for('waste.listar') }}">Mermas</a>
+      <a href="{{ url_for('dashboard.indicadores') }}">Indicadores</a>
+      <a href="{{ url_for('dashboard.portafolio') }}">Portafolio</a>
+      <a href="{{ url_for('imports.importar') }}">Importar</a>
+    </nav>
+  </div>
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

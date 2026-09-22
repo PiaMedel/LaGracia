@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Producción{% endblock %}
+{% block content %}
+  <h1>Producción</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('production.registrar') }}">+ Registrar producción real</a></p>
+
+  <div class="card">
+    <h2>Sugerencias de producción</h2>
+    <table>
+      <tr><th>Producto</th><th>Estado</th><th>Stock</th><th>Demanda esperada</th><th>Confirmado</th><th>Sugerencia</th><th>Planificar</th></tr>
+      {% for s in sugerencias %}
+      <tr>
+        <td>{{ s.producto }}</td>
+        <td><span class="badge {{ {'GANADOR':'verde','POTENCIAL':'amarillo','REVISAR':'naranja','PAUSADO':'gris'}[s.estado_producto] }}">{{ s.estado_producto }}</span></td>
+        <td>{{ s.stock_actual|round(1) }}</td>
+        <td>{{ s.demanda.demanda_esperada|round(1) }}</td>
+        <td>{{ s.demanda.confirmada|round(1) }}</td>
+        <td><strong>{{ s.produccion_sugerida|int }}</strong></td>
+        <td>
+          <form method="post" action="{{ url_for('production.planificar') }}" style="display:flex; gap:6px">
+            <input type="hidden" name="product_id" value="{{ s.product_id }}">
+            <input type="hidden" name="cantidad_sugerida" value="{{ s.produccion_sugerida }}">
+            <input type="number" step="1" name="cantidad_planificada" value="{{ s.produccion_sugerida|int }}" style="width:70px">
+            <button class="btn small" type="submit">Planificar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Historial</h2>
+    {% if historial %}
+    <table>
+      <tr><th>Fecha</th><th>Producto</th><th>Sugerida</th><th>Planificada</th><th>Real</th><th>Estado</th><th></th></tr>
+      {% for h in historial %}
+      <tr>
+        <td>{{ h.fecha.strftime('%d-%m-%Y') }}</td>
+        <td>{{ h.product.nombre }}</td>
+        <td>{{ h.cantidad_sugerida if h.cantidad_sugerida is not none else '—' }}</td>
+        <td>{{ h.cantidad_planificada if h.cantidad_planificada is not none else '—' }}</td>
+        <td>{{ h.cantidad_real if h.cantidad_real is not none else '—' }}</td>
+        <td>{{ h.estado }}</td>
+        <td>
+          {% if h.estado == 'planificada' %}
+          <form method="post" action="{{ url_for('production.ejecutar', production_id=h.id) }}">
+            <input type="hidden" name="cantidad_real" value="{{ h.cantidad_planificada }}">
+            <button class="btn small" type="submit">Ejecutar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">Sin producciones registradas.</p>
+    {% endif %}
+  </div>
+{% endblock %}

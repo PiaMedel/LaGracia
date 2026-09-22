@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Registrar compra{% endblock %}
+{% block content %}
+  <h1>Registrar compra</h1>
+  <div class="card">
+    <form method="post" class="formgrid">
+      <div>
+        <label>Materia prima</label>
+        <select name="raw_material_id" required>
+          {% for m in materiales %}<option value="{{ m.id }}">{{ m.nombre }} ({{ m.unidad_medida }})</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Cantidad</label><input type="number" step="0.01" name="cantidad" required></div>
+      <div><label>Costo total</label><input type="number" step="0.01" name="costo_total"></div>
+      <div><label>Proveedor</label><input name="proveedor"></div>
+      <div class="full"><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </div>
+{% endblock %}

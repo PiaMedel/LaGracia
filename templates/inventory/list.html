@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Materias primas{% endblock %}
+{% block content %}
+  <h1>Materias primas</h1>
+  <p class="subtitle"><a class="btn" href="{{ url_for('inventory.nuevo') }}">+ Nueva materia prima</a></p>
+  <div class="card">
+    <table>
+      <tr><th>Nombre</th><th>Stock</th><th>Punto reposición</th><th>Costo u.</th><th>Proveedor</th><th></th></tr>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.material.nombre }}{% if f.alerta %} <span class="badge {{ f.alerta.nivel }}">{{ f.alerta.texto }}</span>{% endif %}</td>
+        <td>
+          {{ f.stock|round(2) }} {{ f.material.unidad_medida }}
+          {% if f.stock <= f.punto_reposicion %}<span class="badge rojo">bajo</span>{% endif %}
+        </td>
+        <td>{{ f.punto_reposicion|round(2) }} {{ f.material.unidad_medida }}</td>
+        <td>${{ '{:,.0f}'.format(f.material.costo_unitario) }}</td>
+        <td>{{ f.material.proveedor or '—' }}</td>
+        <td class="pill-actions">
+          <a class="btn small secondary" href="{{ url_for('inventory.editar', material_id=f.material.id) }}">Editar</a>
+          <a class="btn small secondary" href="{{ url_for('inventory.movimientos', material_id=f.material.id) }}">Movimientos</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endblock %}

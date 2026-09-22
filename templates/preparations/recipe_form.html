@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Receta — {{ prep.nombre }}{% endblock %}
+{% block content %}
+  <h1>Receta de pre-preparación — {{ prep.nombre }}</h1>
+  <p class="subtitle">Siempre a partir de materias primas.
+    {% if costo_unitario is not none %}Costo unitario actual: <strong>${{ '{:,.0f}'.format(costo_unitario) }}</strong>{% endif %}
+  </p>
+  <div class="card">
+    <form method="post">
+      <div class="formgrid" style="margin-bottom:16px">
+        <div><label>Rendimiento ({{ prep.unidad_medida }} por tanda)</label>
+          <input type="number" step="0.01" name="rendimiento" required value="{{ recipe.rendimiento if recipe else 1 }}"></div>
+      </div>
+      <h2>Materias primas</h2>
+      <div id="rows">
+        {% if recipe %}
+          {% for item in recipe.items %}
+          <div class="recipe-row">
+            <select name="raw_material_id">
+              {% for m in materiales %}
+              <option value="{{ m.id }}" {% if m.id==item.raw_material_id %}selected{% endif %}>{{ m.nombre }} ({{ m.unidad_medida }})</option>
+              {% endfor %}
+            </select>
+            <input type="number" step="0.01" name="cantidad" value="{{ item.cantidad }}" placeholder="Cantidad">
+            <button type="button" class="btn small secondary" onclick="this.parentElement.remove()">Quitar</button>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <button type="button" class="btn small secondary" onclick="addRow()">+ Materia prima</button>
+      <div style="margin-top:16px"><button class="btn" type="submit">Guardar receta</button></div>
+    </form>
+  </div>
+
+  <template id="row-template">
+    <div class="recipe-row">
+      <select name="raw_material_id">
+        {% for m in materiales %}
+        <option value="{{ m.id }}">{{ m.nombre }} ({{ m.unidad_medida }})</option>
+        {% endfor %}
+      </select>
+      <input type="number" step="0.01" name="cantidad" placeholder="Cantidad">
+      <button type="button" class="btn small secondary" onclick="this.parentElement.remove()">Quitar</button>
+    </div>
+  </template>
+  <script>
+    function addRow(){
+      const tpl = document.getElementById('row-template').content.cloneNode(true);
+      document.getElementById('rows').appendChild(tpl);
+    }
+  </script>
+{% endblock %}
