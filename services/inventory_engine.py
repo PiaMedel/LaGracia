@@ -122,3 +122,26 @@ def movement_history(item_type, item_id, limit=100):
         .limit(limit)
         .all()
     )
+
+
+def get_stock(item_type, item_id):
+    if item_type == "product":
+        return calculate_product_stock(item_id)
+    if item_type == "material":
+        return calculate_raw_material_stock(item_id)
+    if item_type == "preparation":
+        return calculate_preparation_stock(item_id)
+    raise ValueError("item_type no válido")
+
+
+def set_stock_to(item_type, item_id, stock_real, nota="Conteo físico", commit=True):
+    """Conteo físico: ajusta el stock del sistema al valor realmente contado,
+    registrando la DIFERENCIA como un movimiento de tipo 'ajuste' (el historial
+    queda intacto y auditable). Devuelve la diferencia aplicada (puede ser 0)."""
+    actual = get_stock(item_type, item_id)
+    diff = round(stock_real - actual, 6)
+    if abs(diff) < 1e-9:
+        return 0.0
+    registrar_movimiento(item_type, item_id, diff, "ajuste",
+                         referencia_tipo="manual", nota=nota, commit=commit)
+    return diff

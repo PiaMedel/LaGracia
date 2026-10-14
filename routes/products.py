@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from extensions import db
 from models.products import Product, ESTADOS_PRODUCTO
 from models.raw_materials import RawMaterial
@@ -100,7 +100,10 @@ def receta(product_id):
         return redirect(url_for("products.listar"))
 
     materiales = RawMaterial.query.filter_by(activo=True).order_by(RawMaterial.nombre).all()
-    preparaciones = Preparation.query.filter_by(activo=True).order_by(Preparation.nombre).all()
+    preparaciones = (
+        Preparation.query.filter_by(activo=True).order_by(Preparation.nombre).all()
+        if current_app.config.get("USAR_PRE_PREPARACIONES") else []
+    )
     margen = calculate_margin(p)
     return render_template(
         "products/recipe_form.html", producto=p, recipe=recipe,

@@ -29,6 +29,7 @@ def create_app(config_class=Config):
     from routes.waste import bp as waste_bp
     from routes.imports import bp as imports_bp
     from routes.preparations import bp as preparations_bp
+    from routes.stocktake import bp as stocktake_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(products_bp)
@@ -40,12 +41,14 @@ def create_app(config_class=Config):
     app.register_blueprint(orders_bp)
     app.register_blueprint(waste_bp)
     app.register_blueprint(imports_bp)
-    app.register_blueprint(preparations_bp)
+    app.register_blueprint(stocktake_bp)
+    if app.config.get("USAR_PRE_PREPARACIONES"):
+        app.register_blueprint(preparations_bp)
 
     @app.context_processor
     def inject_globals():
         from datetime import date
-        return {"hoy_fecha": date.today()}
+        return {"hoy_fecha": date.today(), "usar_preps": app.config.get("USAR_PRE_PREPARACIONES", False)}
 
     return app
 

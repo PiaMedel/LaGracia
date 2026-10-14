@@ -9,7 +9,7 @@ from services.inventory_engine import registrar_movimiento
 
 
 def register_sale(product_id, cantidad, precio, canal="Venta directa",
-                   customer_id=None, order_id=None, fecha=None):
+                   customer_id=None, order_id=None, fecha=None, commit=True):
     sale = Sale(
         product_id=product_id,
         cantidad=cantidad,
@@ -27,15 +27,20 @@ def register_sale(product_id, cantidad, precio, canal="Venta directa",
         referencia_tipo="sale", referencia_id=sale.id,
         fecha=fecha, commit=False,
     )
-    db.session.commit()
+    if commit:
+        db.session.commit()
+    else:
+        db.session.flush()
 
     # si esta venta viene de un cliente B2B, actualizamos su historial
     if customer_id:
         from models.customers import Customer
         c = Customer.query.get(customer_id)
         if c:
-            c.ultimo_pedido = sale.fecha
+            if c.ultimo_pedido is None or sale.fecha >= c.ultimo_pedido:
+                c.ultimo_pedido = sale.fecha
             c.proximo_seguimiento = None  # se recalcula por frecuencia
-            db.session.commit()
+            if commit:
+                db.session.commit()
 
     return sale

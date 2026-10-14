@@ -6,7 +6,7 @@
 
   <div class="resumen-grid">
     <div class="resumen-item"><div class="num">{{ data.resumen.producir_unidades|round(0)|int }}</div><div class="lbl">🧁 Producir (u.)</div></div>
-    <div class="resumen-item"><div class="num">{{ data.resumen.preparar_items }}</div><div class="lbl">🧊 Pre-preparar</div></div>
+    {% if usar_preps %}<div class="resumen-item"><div class="num">{{ data.resumen.preparar_items }}</div><div class="lbl">🧊 Pre-preparar</div></div>{% endif %}
     <div class="resumen-item"><div class="num">{{ data.resumen.comprar_items }}</div><div class="lbl">🛒 Comprar (ítems)</div></div>
     <div class="resumen-item"><div class="num">{{ data.resumen.contactar_clientes }}</div><div class="lbl">📲 Contactar</div></div>
     <div class="resumen-item"><div class="num">{{ data.resumen.alertas }}</div><div class="lbl">⚠️ Alertas</div></div>
@@ -48,6 +48,7 @@
     {% endif %}
   </div>
 
+  {% if usar_preps %}
   <div class="card">
     <h2>Pre-preparar (congelar) hoy</h2>
     {% if data.preparacion %}
@@ -67,6 +68,7 @@
       <p class="empty">No hace falta pre-preparar nada por ahora.</p>
     {% endif %}
   </div>
+  {% endif %}
 
   <div class="card">
     <h2>Comprar hoy</h2>

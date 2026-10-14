@@ -13,12 +13,12 @@
           <input type="number" step="0.01" name="rendimiento" required value="{{ recipe.rendimiento if recipe else 1 }}"></div>
       </div>
       <h2>Ingredientes</h2>
-      <p class="subtitle" style="margin-top:-8px">Cada ingrediente puede ser una materia prima directa o una pre-preparación (semi-elaborado congelado).</p>
+      <p class="subtitle" style="margin-top:-8px">{% if usar_preps %}Cada ingrediente puede ser una materia prima directa o una pre-preparación (semi-elaborado congelado).{% else %}Indica las materias primas que lleva una tanda completa, en la misma unidad en que están registradas.{% endif %}</p>
       <div id="rows">
         {% if recipe %}
           {% for item in recipe.items %}
-          <div class="recipe-row" style="grid-template-columns:1fr 2fr 1fr auto">
-            <select class="ingredient-type" onchange="updateOptions(this)">
+          <div class="recipe-row" style="grid-template-columns:{{ '1fr 2fr 1fr auto' if usar_preps else '2fr 1fr auto' }}">
+            <select class="ingredient-type" onchange="updateOptions(this)" {% if not usar_preps %}style="display:none"{% endif %}>
               <option value="material" {% if item.ingredient_type=='material' %}selected{% endif %}>Materia prima</option>
               <option value="preparation" {% if item.ingredient_type=='preparation' %}selected{% endif %}>Pre-preparación</option>
             </select>
@@ -44,8 +44,8 @@
   </div>
 
   <template id="row-template">
-    <div class="recipe-row" style="grid-template-columns:1fr 2fr 1fr auto">
-      <select class="ingredient-type" onchange="updateOptions(this)">
+    <div class="recipe-row" style="grid-template-columns:{{ '1fr 2fr 1fr auto' if usar_preps else '2fr 1fr auto' }}">
+      <select class="ingredient-type" onchange="updateOptions(this)" {% if not usar_preps %}style="display:none"{% endif %}>
         <option value="material">Materia prima</option>
         <option value="preparation">Pre-preparación</option>
       </select>

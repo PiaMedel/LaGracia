@@ -175,7 +175,7 @@ def detect_compra_hormiga(material_id=None):
     return alertas
 
 
-def register_purchase(raw_material_id, cantidad, costo_total=None, proveedor=None, fecha=None):
+def register_purchase(raw_material_id, cantidad, costo_total=None, proveedor=None, fecha=None, commit=True):
     """Registra una compra real: crea el registro de compra Y el movimiento
     de inventario correspondiente (sección 32: una sola acción, el sistema
     hace el resto)."""
@@ -194,5 +194,6 @@ def register_purchase(raw_material_id, cantidad, costo_total=None, proveedor=Non
         referencia_tipo="purchase", referencia_id=purchase.id,
         fecha=fecha, commit=False,
     )
-    db.session.commit()
+    if commit:
+        db.session.commit()
     return purchase

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Conteo de inventario{% endblock %}
+{% block content %}
+  <h1>Conteo de inventario</h1>
+  <p class="subtitle">Cuenta lo que tienes HOY y escríbelo en la columna "Stock real". Deja vacío lo que no quieras cambiar.
+    El sistema registra solo la diferencia como un ajuste (el historial no se borra). Se puede usar cuantas veces quieras.</p>
+  <form method="post">
+    <div class="card">
+      <h2>Productos terminados</h2>
+      <table>
+        <tr><th>Producto</th><th>Stock según sistema</th><th>Stock real hoy</th></tr>
+        {% for p, stock in filas_p %}
+        <tr>
+          <td>{{ p.nombre }} <span style="color:var(--muted)">({{ p.unidad_venta }})</span></td>
+          <td>{{ stock|round(2) }}</td>
+          <td><input name="p_{{ p.id }}" inputmode="decimal" placeholder="sin cambio" style="width:110px"></td>
+        </tr>
+        {% else %}<tr><td colspan="3" class="empty">No hay productos.</td></tr>{% endfor %}
+      </table>
+    </div>
+    <div class="card">
+      <h2>Materias primas</h2>
+      <table>
+        <tr><th>Materia prima</th><th>Stock según sistema</th><th>Stock real hoy</th></tr>
+        {% for m, stock in filas_m %}
+        <tr>
+          <td>{{ m.nombre }} <span style="color:var(--muted)">({{ m.unidad_medida }})</span></td>
+          <td>{{ stock|round(2) }}</td>
+          <td><input name="m_{{ m.id }}" inputmode="decimal" placeholder="sin cambio" style="width:110px"></td>
+        </tr>
+        {% else %}<tr><td colspan="3" class="empty">No hay materias primas.</td></tr>{% endfor %}
+      </table>
+    </div>
+    <button class="btn" type="submit">Guardar conteo</button>
+  </form>
+{% endblock %}

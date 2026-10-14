@@ -22,6 +22,11 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
+    # Módulo de pre-preparaciones (semi-elaborados congelados). APAGADO por defecto:
+    # la app trabaja solo con materias primas -> productos. Para encenderlo,
+    # definir la variable de entorno USAR_PRE_PREPARACIONES=1 (p. ej. en Railway).
+    USAR_PRE_PREPARACIONES = os.environ.get("USAR_PRE_PREPARACIONES", "0") == "1"
+
     # ---- Parámetros del motor de reglas (ajustables sin tocar código) ----
     # Horizonte de días hacia adelante para calcular demanda / sugerir producción
     HORIZONTE_DEMANDA_DIAS = 3
