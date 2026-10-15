@@ -2,15 +2,15 @@
 {% block title %}Importar datos{% endblock %}
 {% block content %}
   <h1>Importar datos</h1>
-  <p class="subtitle">Orden recomendado: 1) catálogo (materias primas, productos, recetas), 2) compras históricas, 3) ventas históricas.</p>
+  <p class="subtitle">Paso 1: cargar el catálogo (una vez, o cuando cambie). Paso 2: cada semana (o día), subir el Excel base de movimientos.</p>
 
   <div class="card">
-    <h2>1. Catálogo completo (Excel)</h2>
+    <h2>1. Catálogo (Excel): productos, materias primas y recetas</h2>
     <p style="color:var(--muted); font-size:13px">
-      Un solo archivo con hojas: Materias primas, Productos y Recetas{% if usar_preps %} (y Pre-preparaciones){% endif %}.
       Si subes el mismo archivo corregido, lo existente se actualiza (no se duplica).
+      Si cargaste algo mal y quieres partir de cero, usa "Zona de peligro" más abajo.
     </p>
-    <p><a class="btn small secondary" href="{{ url_for('imports.plantilla_catalogo') }}">Descargar plantilla Excel</a></p>
+    <p><a class="btn small secondary" href="{{ url_for('imports.plantilla_catalogo') }}">Descargar plantilla de catálogo</a></p>
     <form method="post" action="{{ url_for('imports.importar_catalogo') }}" enctype="multipart/form-data">
       <input type="file" name="archivo" accept=".xlsx" required>
       <button class="btn small" type="submit">Importar catálogo</button>
@@ -18,22 +18,59 @@
   </div>
 
   <div class="card">
-    <h2>2. Compras históricas (CSV)</h2>
-    <p style="color:var(--muted); font-size:13px">Columnas requeridas: <code>fecha,materia_prima,cantidad,costo,proveedor</code> — las materias primas deben existir antes.</p>
+    <h2>2. Excel base de movimientos (diario o semanal)</h2>
+    <p style="color:var(--muted); font-size:13px">
+      Un solo archivo con 4 hojas: <strong>Ingreso de productos</strong> (descuenta materias primas según receta),
+      <strong>Compras materias primas</strong>, <strong>Ventas</strong> y <strong>Mermas y regalos</strong> (merma, regalo o muestra).
+      Se descarga ya con tus productos y materias primas: solo escribes cantidades. Si una fila falla, no se carga nada.
+    </p>
+    <p><a class="btn small secondary" href="{{ url_for('imports.plantilla_movimientos') }}">Descargar Excel base</a></p>
+    <form method="post" action="{{ url_for('imports.importar_movimientos') }}" enctype="multipart/form-data">
+      <input type="file" name="archivo" accept=".xlsx" required>
+      <label style="font-size:13px; margin-left:8px"><input type="checkbox" name="permitir_repetido" value="1"> Cargar de todos modos (aunque ya se haya subido)</label>
+      <button class="btn small" type="submit" style="margin-left:8px">Cargar movimientos</button>
+    </form>
+  </div>
+
+  <div class="card" style="border-color:var(--rojo)">
+    <h2 style="color:var(--rojo)">Zona de peligro</h2>
+    <p style="color:var(--muted); font-size:13px">Esto no se puede deshacer. Para confirmar, escribe la palabra BORRAR.</p>
+
+    <form method="post" action="{{ url_for('imports.borrar') }}" style="margin-bottom:14px">
+      <input type="hidden" name="alcance" value="movimientos">
+      <strong>Borrar solo movimientos</strong>
+      <span style="color:var(--muted); font-size:13px"> — producción, compras, ventas, conteos. Conserva productos, materias primas y recetas.</span><br>
+      <input name="confirmacion" placeholder="Escribe BORRAR" style="margin-top:6px">
+      <button class="btn small" type="submit" style="background:var(--rojo)">Borrar movimientos</button>
+    </form>
+
+    <form method="post" action="{{ url_for('imports.borrar') }}">
+      <input type="hidden" name="alcance" value="todo">
+      <strong>Borrar TODO y empezar de cero</strong>
+      <span style="color:var(--muted); font-size:13px"> — incluye productos, materias primas y recetas.</span><br>
+      <input name="confirmacion" placeholder="Escribe BORRAR" style="margin-top:6px">
+      <button class="btn small" type="submit" style="background:var(--rojo)">Borrar todo</button>
+    </form>
+  </div>
+
+  {% if not modo_simple %}
+  <div class="card">
+    <h2>Compras históricas (CSV)</h2>
+    <p style="color:var(--muted); font-size:13px">Columnas: <code>fecha,materia_prima,cantidad,costo,proveedor</code></p>
     <form method="post" enctype="multipart/form-data">
       <input type="hidden" name="tipo" value="compras">
       <input type="file" name="archivo" accept=".csv" required>
       <button class="btn small" type="submit">Importar compras</button>
     </form>
   </div>
-
   <div class="card">
-    <h2>3. Ventas históricas (CSV)</h2>
-    <p style="color:var(--muted); font-size:13px">Columnas requeridas: <code>fecha,producto,cantidad,precio,cliente_o_canal</code> — los productos deben existir antes.</p>
+    <h2>Ventas históricas (CSV)</h2>
+    <p style="color:var(--muted); font-size:13px">Columnas: <code>fecha,producto,cantidad,precio,cliente_o_canal</code></p>
     <form method="post" enctype="multipart/form-data">
       <input type="hidden" name="tipo" value="ventas">
       <input type="file" name="archivo" accept=".csv" required>
       <button class="btn small" type="submit">Importar ventas</button>
     </form>
   </div>
+  {% endif %}
 {% endblock %}

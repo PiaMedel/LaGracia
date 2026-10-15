@@ -2,6 +2,9 @@ from datetime import datetime
 from extensions import db
 
 MOTIVOS_MERMA = ["Vencimiento", "Producción defectuosa", "Daño", "Sobreproducción", "Error", "Otro"]
+# Una "salida sin venta" puede ser una merma (pérdida) o un regalo / muestra (entrega voluntaria).
+# Solo las MERMAS cuentan para el % de merma; regalos y muestras se registran aparte.
+TIPOS_SALIDA = ["Merma", "Regalo", "Muestra"]
 
 
 class Waste(db.Model):
@@ -14,6 +17,8 @@ class Waste(db.Model):
     raw_material_id = db.Column(db.Integer, db.ForeignKey("raw_materials.id"), nullable=True)
     cantidad = db.Column(db.Float, nullable=False)
     motivo = db.Column(db.String(30), default="Otro")
+    tipo = db.Column(db.String(20), default="Merma")   # Merma | Regalo | Muestra
+    nota = db.Column(db.String(255))                    # texto libre (a quién, para qué, etc.)
 
     product = db.relationship("Product")
     raw_material = db.relationship("RawMaterial")

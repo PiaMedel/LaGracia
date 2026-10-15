@@ -108,7 +108,7 @@ def suggest_purchase(material_id, horizon_days=None):
     # si el stock cae al/bajo el punto de reposición, igual se alerta (Regla 6:
     # no comprar SOLO por stock bajo, pero el punto de reposición ya incorpora
     # consumo proyectado + lead time, así que es una señal válida y distinta).
-    bajo_punto_reposicion = stock_actual <= punto_reposicion
+    bajo_punto_reposicion = punto_reposicion > 0 and stock_actual <= punto_reposicion
 
     comprar = 0.0
     if necesidad_neta > 0 or bajo_punto_reposicion:

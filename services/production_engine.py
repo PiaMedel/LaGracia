@@ -149,11 +149,14 @@ def plan_production(product_id, cantidad_planificada, cantidad_sugerida=None, mo
         motivo_modificacion=motivo_modificacion,
     )
     db.session.add(prod)
-    db.session.commit()
+    if commit:
+        db.session.commit()
+    else:
+        db.session.flush()
     return prod
 
 
-def execute_production(production_id=None, product_id=None, cantidad_real=None, fecha=None):
+def execute_production(production_id=None, product_id=None, cantidad_real=None, fecha=None, commit=True):
     """Ejecuta una producción REAL: genera automáticamente los movimientos de
     inventario (sección 32 — mínimos clics, el sistema hace el resto):
       +cantidad_real de producto terminado
@@ -179,6 +182,7 @@ def execute_production(production_id=None, product_id=None, cantidad_real=None, 
             cantidad_planificada=cantidad_real,
             cantidad_real=cantidad_real,
             estado="realizada",
+            fecha=(fecha.date() if hasattr(fecha, "hour") else fecha) or date.today(),
         )
         db.session.add(prod)
 

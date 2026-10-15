@@ -11,19 +11,21 @@
     <div class="brand">🧁 La Gracia</div>
     <nav>
       <a href="{{ url_for('dashboard.hoy') }}">Hoy</a>
+      <a href="{{ url_for('products.listar') }}">Productos</a>
+      <a href="{{ url_for('inventory.listar') }}">Materias primas</a>
+      <a href="{{ url_for('sales.listar') }}">Ventas</a>
+      <a href="{{ url_for('waste.listar') }}">Mermas y regalos</a>
+      <a href="{{ url_for('stocktake.conteo') }}">Conteo</a>
+      <a href="{{ url_for('imports.importar') }}">Importar</a>
+      {% if not modo_simple %}
       <a href="{{ url_for('production.listar') }}">Producción</a>
       {% if usar_preps %}<a href="{{ url_for('preparations.listar') }}">Pre-preparaciones</a>{% endif %}
       <a href="{{ url_for('purchases.listar') }}">Compras</a>
-      <a href="{{ url_for('inventory.listar') }}">Materias primas</a>
-      <a href="{{ url_for('products.listar') }}">Productos</a>
-      <a href="{{ url_for('sales.listar') }}">Ventas</a>
       <a href="{{ url_for('orders.listar') }}">Pedidos</a>
       <a href="{{ url_for('customers.listar') }}">Clientes B2B</a>
-      <a href="{{ url_for('waste.listar') }}">Mermas</a>
       <a href="{{ url_for('dashboard.indicadores') }}">Indicadores</a>
       <a href="{{ url_for('dashboard.portafolio') }}">Portafolio</a>
-      <a href="{{ url_for('stocktake.conteo') }}">Conteo</a>
-      <a href="{{ url_for('imports.importar') }}">Importar</a>
+      {% endif %}
     </nav>
   </div>
   <div class="container">

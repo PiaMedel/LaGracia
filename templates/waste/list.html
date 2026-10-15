@@ -1,23 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Mermas{% endblock %}
+{% block title %}Mermas, regalos y muestras{% endblock %}
 {% block content %}
-  <h1>Mermas</h1>
-  <p class="subtitle"><a class="btn" href="{{ url_for('waste.nueva') }}">+ Registrar merma</a></p>
+  <h1>Mermas, regalos y muestras</h1>
+  <p class="subtitle">
+    Todo lo que sale sin ser una venta. Descuenta stock automáticamente.
+    Solo las <strong>mermas</strong> cuentan para el % de merma; regalos y muestras se registran aparte.
+    <a class="btn" href="{{ url_for('waste.nueva') }}" style="margin-left:10px">+ Registrar</a>
+  </p>
+
+  <div class="resumen-grid">
+    {% for t in tipos %}
+    <div class="resumen-item">
+      <div class="num">{{ resumen[t].registros }}</div>
+      <div class="lbl">{{ {'Merma':'♻️ Mermas','Regalo':'🎁 Regalos','Muestra':'🧪 Muestras'}[t] }} (30 días)<br>
+        costo est. ${{ '{:,.0f}'.format(resumen[t].costo) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="tabs" style="margin-top:14px">
+    <a href="{{ url_for('waste.listar') }}" class="{{ '' if tipo else 'active' }}">Todos</a>
+    {% for t in tipos %}<a href="{{ url_for('waste.listar', tipo=t) }}" class="{{ 'active' if tipo == t else '' }}">{{ t }}s</a>{% endfor %}
+  </div>
+
   <div class="card">
-    {% if mermas %}
+    {% if registros %}
     <table>
-      <tr><th>Fecha</th><th>Item</th><th>Cantidad</th><th>Motivo</th></tr>
-      {% for m in mermas %}
+      <tr><th>Fecha</th><th>Tipo</th><th>Ítem</th><th>Cantidad</th><th>Motivo</th><th>Nota</th></tr>
+      {% for m in registros %}
       <tr>
         <td>{{ m.fecha.strftime('%d-%m-%Y') }}</td>
-        <td>{{ m.product.nombre if m.product else m.raw_material.nombre }}</td>
-        <td>{{ m.cantidad }}</td>
-        <td>{{ m.motivo }}</td>
+        <td><span class="badge {{ {'Merma':'rojo','Regalo':'verde','Muestra':'amarillo'}.get(m.tipo or 'Merma', 'gris') }}">{{ m.tipo or 'Merma' }}</span></td>
+        <td>{{ m.product.nombre if m.product else (m.raw_material.nombre if m.raw_material else '—') }}</td>
+        <td>{{ m.cantidad|round(2) }}</td>
+        <td>{{ m.motivo or '—' }}</td>
+        <td style="color:var(--muted)">{{ m.nota or '' }}</td>
       </tr>
       {% endfor %}
     </table>
     {% else %}
-      <p class="empty">Sin mermas registradas.</p>
+      <p class="empty">Sin registros todavía.</p>
     {% endif %}
   </div>
 {% endblock %}

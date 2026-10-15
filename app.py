@@ -1,7 +1,39 @@
 import os
-from flask import Flask
+import time
+from flask import Flask, abort, request
 from config import Config
 from extensions import db
+
+# Hora de Chile para todo lo que dependa de "hoy" (el servidor corre en UTC).
+os.environ.setdefault("TZ", "America/Santiago")
+try:
+    time.tzset()
+except AttributeError:  # Windows
+    pass
+
+BLOQUEADAS_MODO_SIMPLE = (
+    "/produccion", "/compras", "/clientes", "/pedidos",
+    "/preparaciones", "/indicadores", "/portafolio", "/api/b2b",
+)
+_DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+          "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def ensure_schema():
+    """db.create_all() crea tablas nuevas pero NO agrega columnas a tablas que ya
+    existen. Esta función agrega, de forma segura y repetible, las columnas que
+    se incorporaron después de la primera versión (conserva todos los datos)."""
+    from sqlalchemy import inspect, text
+    insp = inspect(db.engine)
+    if "waste" not in insp.get_table_names():
+        return
+    cols = {c["name"] for c in insp.get_columns("waste")}
+    with db.engine.begin() as conn:
+        if "tipo" not in cols:
+            conn.execute(text("ALTER TABLE waste ADD COLUMN tipo VARCHAR(20) DEFAULT 'Merma'"))
+        if "nota" not in cols:
+            conn.execute(text("ALTER TABLE waste ADD COLUMN nota VARCHAR(255)"))
 
 
 def create_app(config_class=Config):
@@ -16,6 +48,7 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
+        ensure_schema()
 
     # ---- blueprints ----
     from routes.dashboard import bp as dashboard_bp
@@ -45,10 +78,21 @@ def create_app(config_class=Config):
     if app.config.get("USAR_PRE_PREPARACIONES"):
         app.register_blueprint(preparations_bp)
 
+    @app.before_request
+    def _bloquear_modulos_desactivados():
+        if app.config.get("MODO_SIMPLE") and request.path.startswith(BLOQUEADAS_MODO_SIMPLE):
+            abort(404)
+
     @app.context_processor
     def inject_globals():
         from datetime import date
-        return {"hoy_fecha": date.today(), "usar_preps": app.config.get("USAR_PRE_PREPARACIONES", False)}
+        hoy = date.today()
+        return {
+            "hoy_fecha": hoy,
+            "fecha_larga": f"{_DIAS[hoy.weekday()].capitalize()} {hoy.day} de {_MESES[hoy.month - 1]} de {hoy.year}",
+            "usar_preps": app.config.get("USAR_PRE_PREPARACIONES", False),
+            "modo_simple": app.config.get("MODO_SIMPLE", False),
+        }
 
     return app
 

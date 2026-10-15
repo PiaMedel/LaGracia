@@ -208,3 +208,76 @@ def build_indicators_dashboard():
             "detalle": merma_alertas,
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# HOY en MODO SIMPLE: solo "qué producir" y "qué comprar" (+ avisos de orden)
+# ---------------------------------------------------------------------------
+def build_simple_hoy():
+    from models.recipes import Recipe
+    from services.purchasing_engine import suggest_purchase_all
+
+    # --- Productos que producir
+    productos = []
+    for s in suggest_production_all():
+        sugerida = s["produccion_sugerida"]
+        if sugerida <= 0:
+            continue
+        stock, seg = s["stock_actual"], s["stock_seguridad"] or 0.0
+        if stock < 0:
+            motivo, nivel = f"Stock negativo ({stock:g}): revisa producción/ventas o haz un Conteo", "rojo"
+        elif stock == 0:
+            motivo, nivel = "Sin stock", "rojo"
+        elif seg and stock < seg:
+            motivo, nivel = f"Bajo el stock de seguridad ({stock:g} de {seg:g})", "rojo"
+        else:
+            d = s["demanda"]
+            motivo, nivel = f"Se esperan ventas de ~{d['demanda_esperada']:g} en {d['horizon_days']} días", "amarillo"
+        productos.append({
+            "producto": s["producto"], "stock": stock, "stock_seguridad": seg,
+            "producir": sugerida, "motivo": motivo, "nivel": nivel,
+        })
+    productos.sort(key=lambda r: (r["nivel"] != "rojo", -r["producir"]))
+
+    # --- Materias primas que comprar
+    materias = []
+    for c in suggest_purchase_all():
+        if c["comprar"] <= 0:
+            continue
+        stock, seg = c["stock_actual"], c["stock_seguridad"] or 0.0
+        if stock <= 0:
+            motivo, nivel = "Sin stock" if stock == 0 else f"Stock negativo ({stock:g}): revisa compras o haz un Conteo", "rojo"
+        elif seg and stock < seg:
+            motivo, nivel = f"Bajo el stock de seguridad ({stock:g} de {seg:g})", "rojo"
+        elif c["bajo_punto_reposicion"]:
+            motivo, nivel = f"Bajo el punto de reposición (stock {stock:g}, punto {c['punto_reposicion']:g})", "rojo"
+        else:
+            motivo, nivel = f"Falta para la producción proyectada (necesitas ~{c['necesidad_proyectada']:g})", "amarillo"
+        materias.append({
+            "materia_prima": c["materia_prima"], "unidad": c["unidad_medida"], "stock": stock,
+            "comprar": c["comprar"], "motivo": motivo, "nivel": nivel,
+        })
+    materias.sort(key=lambda r: (r["nivel"] != "rojo", -r["comprar"]))
+
+    # --- Orden pendiente: productos activos sin receta (no descuentan materias primas)
+    con_receta = {r.product_id for r in Recipe.query.all() if r.items}
+    sin_receta = [
+        p.nombre for p in Product.query.filter_by(activo=True).order_by(Product.nombre).all()
+        if p.id not in con_receta and p.estado != "PAUSADO"
+    ]
+
+    vencimientos = all_expiry_alerts()
+    mermas_altas = calculate_waste_alerts()
+
+    return {
+        "mermas_altas": mermas_altas,
+        "resumen": {
+            "producir": len(productos),
+            "comprar": len(materias),
+            "vencimientos": len(vencimientos),
+        },
+        "productos": productos,
+        "materias": materias,
+        "sin_receta": sin_receta,
+        "vencimientos": vencimientos,
+    }

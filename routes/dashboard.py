@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, jsonify
-from services.dashboard_engine import build_hoy_dashboard, build_indicators_dashboard
+from flask import Blueprint, render_template, jsonify, current_app
+from services.dashboard_engine import build_hoy_dashboard, build_indicators_dashboard, build_simple_hoy
 from services.b2b_engine import postpone_followup, register_contact
 from services.portfolio_engine import classify_all_products
 
@@ -8,6 +8,8 @@ bp = Blueprint("dashboard", __name__)
 
 @bp.route("/")
 def hoy():
+    if current_app.config.get("MODO_SIMPLE"):
+        return render_template("hoy_simple.html", data=build_simple_hoy())
     data = build_hoy_dashboard()
     return render_template("hoy.html", data=data)
 

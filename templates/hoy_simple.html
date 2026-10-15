@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}La Gracia — Hoy{% endblock %}
+{% block content %}
+  <h1>Hoy</h1>
+  <p class="subtitle">{{ fecha_larga }}</p>
+
+  <div class="resumen-grid">
+    <div class="resumen-item"><div class="num">{{ data.resumen.producir }}</div><div class="lbl">🧁 Productos por producir</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.comprar }}</div><div class="lbl">🛒 Materias primas por comprar</div></div>
+    <div class="resumen-item"><div class="num">{{ data.resumen.vencimientos }}</div><div class="lbl">⏳ Posibles vencimientos</div></div>
+  </div>
+
+  {% if data.sin_receta %}
+  <div class="flash warning">
+    <strong>Falta configurar:</strong> estos productos no tienen receta, así que al ingresar su producción
+    NO se descontarán materias primas: {{ data.sin_receta|join(', ') }}.
+    (Productos → Receta, o súbelos en el Excel de catálogo.)
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>⚠️ Productos que producir</h2>
+    {% if data.productos %}
+    <table>
+      <tr><th></th><th>Producto</th><th>Stock</th><th>Producir</th><th>Por qué</th></tr>
+      {% for r in data.productos %}
+      <tr>
+        <td><span class="badge {{ r.nivel }}">{{ '🔴' if r.nivel == 'rojo' else '🟡' }}</span></td>
+        <td>{{ r.producto }}</td>
+        <td>{{ r.stock|round(1) }}</td>
+        <td><strong>{{ r.producir|int }}</strong></td>
+        <td style="color:var(--muted)">{{ r.motivo }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">✅ Nada urgente por producir.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>⚠️ Materias primas que comprar</h2>
+    {% if data.materias %}
+    <table>
+      <tr><th></th><th>Materia prima</th><th>Stock</th><th>Comprar</th><th>Por qué</th></tr>
+      {% for r in data.materias %}
+      <tr>
+        <td><span class="badge {{ r.nivel }}">{{ '🔴' if r.nivel == 'rojo' else '🟡' }}</span></td>
+        <td>{{ r.materia_prima }}</td>
+        <td>{{ r.stock|round(2) }} {{ r.unidad }}</td>
+        <td><strong>{{ r.comprar|round(2) }} {{ r.unidad }}</strong></td>
+        <td style="color:var(--muted)">{{ r.motivo }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <p class="empty">✅ No hay nada urgente por comprar.</p>
+    {% endif %}
+  </div>
+
+  {% if data.mermas_altas %}
+  <div class="card">
+    <h2>♻️ Merma sobre el umbral</h2>
+    <ul class="alert-list">
+      {% for w in data.mermas_altas %}
+      <li><span class="badge rojo">{{ w.merma_pct }}%</span> {{ w.producto }}: {{ w.total_merma|round(1) }} de {{ w.total_producido|round(1) }} producidas (últimos 30 días)</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if data.vencimientos %}
+  <div class="card">
+    <h2>⏳ Posibles vencimientos</h2>
+    <ul class="alert-list">
+      {% for v in data.vencimientos %}
+      <li><span class="badge {{ 'rojo' if v.nivel == 'rojo' else 'amarillo' }}">{{ v.tipo }}</span> {{ v.nombre }}: {{ v.texto }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <p style="color:var(--muted); font-size:13px">
+    Para actualizar los datos: <a href="{{ url_for('imports.importar') }}">Importar</a> el Excel base de la semana.
+    Si el stock del sistema no coincide con lo que hay realmente: <a href="{{ url_for('stocktake.conteo') }}">Conteo</a>.
+  </p>
+{% endblock %}

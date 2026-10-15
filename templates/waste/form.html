@@ -1,37 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Registrar merma{% endblock %}
+{% block title %}Registrar merma, regalo o muestra{% endblock %}
 {% block content %}
-  <h1>Registrar merma</h1>
+  <h1>Registrar merma, regalo o muestra</h1>
   <div class="card">
     <form method="post" class="formgrid">
       <div>
-        <label>Tipo</label>
+        <label>¿Qué es?</label>
+        <select name="tipo" id="tipo" onchange="toggle()">
+          {% for t in tipos %}<option value="{{ t }}">{{ {'Merma':'Merma (pérdida)','Regalo':'Regalo','Muestra':'Entrega de muestra'}[t] }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label>Fecha</label><input type="date" name="fecha" value="{{ hoy_fecha.isoformat() }}"></div>
+      <div id="tipo-item-box">
+        <label>Se trata de</label>
         <select name="item_type" id="item_type" onchange="toggle()">
           <option value="product">Producto terminado</option>
           <option value="material">Materia prima</option>
         </select>
       </div>
-      <div><label>Cantidad</label><input type="number" step="0.01" name="cantidad" required></div>
+      <div><label>Cantidad</label><input name="cantidad" inputmode="decimal" required></div>
       <div id="product-field">
         <label>Producto</label>
         <select name="product_id">{% for p in productos %}<option value="{{ p.id }}">{{ p.nombre }}</option>{% endfor %}</select>
       </div>
       <div id="material-field" style="display:none">
         <label>Materia prima</label>
-        <select name="raw_material_id">{% for m in materiales %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}</select>
+        <select name="raw_material_id">{% for m in materiales %}<option value="{{ m.id }}">{{ m.nombre }} ({{ m.unidad_medida }})</option>{% endfor %}</select>
       </div>
-      <div>
-        <label>Motivo</label>
+      <div id="motivo-field">
+        <label>Motivo de la merma</label>
         <select name="motivo">{% for mo in motivos %}<option value="{{ mo }}">{{ mo }}</option>{% endfor %}</select>
       </div>
+      <div class="full"><label>Nota (opcional): por ejemplo a quién se regaló o para qué</label><input name="nota" maxlength="255"></div>
       <div class="full"><button class="btn" type="submit">Guardar</button></div>
     </form>
   </div>
   <script>
     function toggle(){
-      const t = document.getElementById('item_type').value;
+      const tipo = document.getElementById('tipo').value;
+      const sel = document.getElementById('item_type');
+      if (tipo !== 'Merma') { sel.value = 'product'; }          // regalos y muestras: solo productos
+      document.getElementById('tipo-item-box').style.display = (tipo === 'Merma') ? '' : 'none';
+      const t = sel.value;
       document.getElementById('product-field').style.display = t === 'product' ? '' : 'none';
       document.getElementById('material-field').style.display = t === 'material' ? '' : 'none';
+      document.getElementById('motivo-field').style.display = tipo === 'Merma' ? '' : 'none';
     }
+    toggle();
   </script>
 {% endblock %}

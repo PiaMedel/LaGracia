@@ -16,10 +16,10 @@
         <label>Canal</label>
         <select name="canal">{% for c in canales %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
       </div>
-      <div>
+      {% if not modo_simple %}<div>
         <label>Cliente (opcional, B2B)</label>
         <select name="customer_id"><option value="">—</option>{% for c in clientes %}<option value="{{ c.id }}">{{ c.nombre }}</option>{% endfor %}</select>
-      </div>
+      </div>{% endif %}
       <div class="full"><button class="btn" type="submit">Guardar</button></div>
     </form>
   </div>

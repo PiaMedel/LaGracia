@@ -22,6 +22,12 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
+    # MODO SIMPLE (por defecto): la app muestra solo Productos, Materias primas,
+    # Ventas, Conteo, Importar y la pantalla HOY con warnings. Los módulos
+    # Producción, Compras, Clientes B2B, Pedidos, Mermas, Indicadores y Portafolio
+    # quedan desactivados (siguen en el código). Para reactivarlos: MODO_SIMPLE=0.
+    MODO_SIMPLE = os.environ.get("MODO_SIMPLE", "1") == "1"
+
     # Módulo de pre-preparaciones (semi-elaborados congelados). APAGADO por defecto:
     # la app trabaja solo con materias primas -> productos. Para encenderlo,
     # definir la variable de entorno USAR_PRE_PREPARACIONES=1 (p. ej. en Railway).

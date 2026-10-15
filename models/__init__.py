@@ -9,6 +9,7 @@ from .production import Production
 from .waste import Waste, MOTIVOS_MERMA
 from .inventory import StockMovement, TIPOS_MOVIMIENTO
 from .purchases import Purchase
+from .import_log import ImportLog
 
 __all__ = [
     "Product", "ESTADOS_PRODUCTO",
@@ -22,4 +23,5 @@ __all__ = [
     "Waste", "MOTIVOS_MERMA",
     "StockMovement", "TIPOS_MOVIMIENTO",
     "Purchase",
+    "ImportLog",
 ]
