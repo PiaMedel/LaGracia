@@ -15,6 +15,7 @@ from flask import current_app
 from extensions import db
 from models.preparations import Preparation, PreparationProduction
 from models.recipes import Recipe, RecipeItem
+from models.products import Product
 from services.inventory_engine import calculate_preparation_stock, registrar_movimiento, last_entry_date
 
 
@@ -30,7 +31,8 @@ def calculate_preparation_requirement(horizon_days=None):
         cantidad_producir = s["produccion_sugerida"]
         if cantidad_producir <= 0:
             continue
-        recipe = Recipe.query.filter_by(product_id=s["product_id"]).first()
+        prod = Product.query.get(s["product_id"])
+        recipe = prod.effective_recipe if prod is not None else None
         if not recipe or not recipe.rendimiento:
             continue
         factor = cantidad_producir / recipe.rendimiento

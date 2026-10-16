@@ -58,6 +58,7 @@ LEEME = [
     "   • 'Ventas': lo que SALIÓ de productos (vendido). Resta del stock del producto.",
     "   • 'Mermas y regalos': lo que salió SIN venta. Elige el tipo: Merma (pérdida), Regalo o Muestra (entrega de muestra). Elige el ítem de la lista desplegable.",
     "     Los regalos y muestras solo se pueden registrar para productos. Solo las Mermas cuentan para el % de merma.",
+    "   • Los productos que COMPARTEN STOCK con otro (por ejemplo 'Torta Retail' o 'Trozo de torta' con 'Torta') no se producen por separado: se produce la Torta; sus ventas van en 'Ventas' y descuentan del stock de la torta.",
     "3. La columna 'fecha' viene con la fecha de hoy. Cámbiala si corresponde (formato 2026-10-14 o 14/10/2026).",
     "4. Para registrar varias veces el mismo producto (por ejemplo en días distintos) copia la fila y cambia la fecha.",
     "5. Cada archivo SUMA movimientos nuevos. No subas dos veces el mismo archivo (la app lo detecta y lo bloquea).",
@@ -94,7 +95,7 @@ def build_movements_template():
 
     ws = wb.create_sheet(SHEET_PROD)
     _style_header(ws, ["fecha", "producto", "cantidad"], [14, 38, 14])
-    for i, p in enumerate(productos, start=2):
+    for i, p in enumerate([x for x in productos if not x.base_id], start=2):   # las fracciones no se producen
         ws.cell(row=i, column=1, value=hoy).number_format = "yyyy-mm-dd"
         ws.cell(row=i, column=2, value=p.nombre)
 
@@ -241,7 +242,10 @@ def import_movements(file_bytes, filename="", allow_duplicate=False):
             cant = _n(d["cantidad"])
             if cant < 0:
                 raise ValueError("la cantidad no puede ser negativa (para corregir usa 'Conteo')")
-            if p.recipe is None or not p.recipe.items:
+            if p.base_id:
+                raise ValueError(f"'{p.nombre}' comparte el stock de '{p.base.nombre}': no se produce por separado. Registra la producción de '{p.base.nombre}'")
+            rec = p.effective_recipe
+            if rec is None or not rec.items:
                 raise ValueError(f"'{p.nombre}' no tiene receta: sin receta no se pueden descontar materias primas. Cárgala en el catálogo")
             ops_prod.append((p, cant, chequea_fecha(n, SHEET_PROD, d)))
         except ValueError as e:

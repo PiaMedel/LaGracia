@@ -20,7 +20,7 @@ def _num(txt):
 
 @bp.route("/", methods=["GET", "POST"])
 def conteo():
-    productos = Product.query.filter_by(activo=True).order_by(Product.nombre).all()
+    productos = Product.query.filter_by(activo=True).filter(Product.base_id.is_(None)).order_by(Product.nombre).all()
     materiales = RawMaterial.query.filter_by(activo=True).order_by(RawMaterial.nombre).all()
 
     if request.method == "POST":

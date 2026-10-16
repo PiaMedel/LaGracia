@@ -34,8 +34,23 @@ def registrar_movimiento(item_type, item_id, cantidad, tipo_movimiento,
     return mov
 
 
+def stock_target(product_id):
+    """(id del producto que lleva el stock, factor). Un producto normal lleva su propio
+    stock (factor 1). Una FRACCIÓN (ej. trozo = 1/8 de torta) descuenta del producto
+    base: 1 trozo = 1/8 de torta, o sea factor 1/8."""
+    from models.products import Product
+    p = db.session.get(Product, product_id)
+    if p is not None and p.base_id and p.unidades_por_base:
+        return p.base_id, 1.0 / p.unidades_por_base
+    return product_id, 1.0
+
+
 def calculate_product_stock(product_id):
-    """Stock actual de un producto terminado = suma de sus movimientos."""
+    """Stock actual de un producto terminado = suma de sus movimientos.
+    Para una fracción (trozo) es DERIVADO: stock de la torta x trozos por torta."""
+    target, factor = stock_target(product_id)
+    if target != product_id:
+        return calculate_product_stock(target) / factor
     total = (
         db.session.query(db.func.coalesce(db.func.sum(StockMovement.cantidad), 0.0))
         .filter(StockMovement.item_type == "product", StockMovement.item_id == product_id)
@@ -62,7 +77,11 @@ def get_all_product_stocks():
         .group_by(StockMovement.item_id)
         .all()
     )
-    return {pid: float(total or 0.0) for pid, total in rows}
+    stocks = {pid: float(total or 0.0) for pid, total in rows}
+    from models.products import Product
+    for f in Product.query.filter(Product.base_id.isnot(None)).all():   # fracciones: derivado de la base
+        stocks[f.id] = stocks.get(f.base_id, 0.0) * (f.unidades_por_base or 0.0)
+    return stocks
 
 
 def get_all_material_stocks():

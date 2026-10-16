@@ -26,14 +26,20 @@ def ensure_schema():
     se incorporaron después de la primera versión (conserva todos los datos)."""
     from sqlalchemy import inspect, text
     insp = inspect(db.engine)
-    if "waste" not in insp.get_table_names():
-        return
-    cols = {c["name"] for c in insp.get_columns("waste")}
-    with db.engine.begin() as conn:
-        if "tipo" not in cols:
-            conn.execute(text("ALTER TABLE waste ADD COLUMN tipo VARCHAR(20) DEFAULT 'Merma'"))
-        if "nota" not in cols:
-            conn.execute(text("ALTER TABLE waste ADD COLUMN nota VARCHAR(255)"))
+    tablas = set(insp.get_table_names())
+    nuevas = {
+        "waste": [("tipo", "VARCHAR(20) DEFAULT 'Merma'"), ("nota", "VARCHAR(255)")],
+        "products": [("base_id", "INTEGER REFERENCES products(id)"),
+                     ("unidades_por_base", "FLOAT")],
+    }
+    for tabla, columnas in nuevas.items():
+        if tabla not in tablas:
+            continue
+        existentes = {c["name"] for c in insp.get_columns(tabla)}
+        with db.engine.begin() as conn:
+            for nombre, definicion in columnas:
+                if nombre not in existentes:
+                    conn.execute(text(f"ALTER TABLE {tabla} ADD COLUMN {nombre} {definicion}"))
 
 
 def create_app(config_class=Config):

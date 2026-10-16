@@ -37,12 +37,20 @@ def _historical_daily_average(product_id, window_days=None):
     """Venta promedio diaria histórica de un producto (línea base de demanda)."""
     window_days = window_days or current_app.config["VENTANA_HISTORICA_DIAS"]
     since = date.today() - timedelta(days=window_days)
-    total = (
+    total = float(
         db.session.query(db.func.coalesce(db.func.sum(Sale.cantidad), 0.0))
         .filter(Sale.product_id == product_id, Sale.fecha >= since)
-        .scalar()
+        .scalar() or 0.0
     )
-    return float(total or 0.0) / window_days if window_days else 0.0
+    # Las ventas de sus fracciones (trozos) también consumen este producto: 8 trozos = 1 unidad.
+    for frac in Product.query.filter(Product.base_id == product_id).all():
+        vendidas = float(
+            db.session.query(db.func.coalesce(db.func.sum(Sale.cantidad), 0.0))
+            .filter(Sale.product_id == frac.id, Sale.fecha >= since)
+            .scalar() or 0.0
+        )
+        total += vendidas / (frac.unidades_por_base or 1.0)
+    return total / window_days if window_days else 0.0
 
 
 def calculate_demand(product_id, horizon_days=None):
@@ -106,7 +114,7 @@ def suggest_production(product_id, horizon_days=None):
     stock_actual = calculate_product_stock(product_id)
     stock_seguridad = product.stock_seguridad or 0.0
 
-    if product.estado == "PAUSADO":
+    if product.estado == "PAUSADO" or product.base_id:   # las fracciones no se producen: se produce la base
         sugerida = 0.0
     else:
         seguridad_term = (
@@ -135,6 +143,7 @@ def suggest_production_all(horizon_days=None, solo_activos=True):
     query = Product.query
     if solo_activos:
         query = query.filter(Product.activo.is_(True))
+    query = query.filter(Product.base_id.is_(None))      # las fracciones (trozos) no tienen producción propia
     return [suggest_production(p.id, horizon_days) for p in query.all()]
 
 
@@ -196,7 +205,10 @@ def execute_production(production_id=None, product_id=None, cantidad_real=None, 
     )
 
     # 2) Consumo de ingredientes según receta (materia prima Y/O preparaciones)
-    recipe = Recipe.query.filter_by(product_id=product_id).first()
+    producto = db.session.get(Product, product_id)
+    if producto is not None and producto.base_id:
+        raise ValueError(f"'{producto.nombre}' comparte el stock de '{producto.base.nombre}': no se produce por separado, se produce '{producto.base.nombre}'")
+    recipe = producto.effective_recipe if producto is not None else None   # propia o compartida
     if recipe and recipe.rendimiento:
         factor = cantidad_real / recipe.rendimiento
         for item in recipe.items:

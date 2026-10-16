@@ -5,7 +5,7 @@ además descuenta stock automáticamente (sección 32).
 from datetime import date
 from extensions import db
 from models.sales import Sale
-from services.inventory_engine import registrar_movimiento
+from services.inventory_engine import registrar_movimiento, stock_target
 
 
 def register_sale(product_id, cantidad, precio, canal="Venta directa",
@@ -22,9 +22,13 @@ def register_sale(product_id, cantidad, precio, canal="Venta directa",
     db.session.add(sale)
     db.session.flush()
 
+    # Si el producto es una fracción (ej. trozo), el stock se descuenta del producto base
+    # en la proporción que corresponda (1 trozo = 1/8 de torta). La venta queda a nombre del trozo.
+    target, factor = stock_target(product_id)
     registrar_movimiento(
-        "product", product_id, -abs(cantidad), "venta",
+        "product", target, -abs(cantidad) * factor, "venta",
         referencia_tipo="sale", referencia_id=sale.id,
+        nota=(f"venta de {abs(cantidad):g} unidad(es) a nombre de otro producto que comparte este stock" if target != product_id else None),
         fecha=fecha, commit=False,
     )
     if commit:

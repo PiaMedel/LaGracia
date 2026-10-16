@@ -6,7 +6,7 @@ from flask import current_app
 from extensions import db
 from models.waste import Waste
 from models.production import Production
-from services.inventory_engine import registrar_movimiento
+from services.inventory_engine import registrar_movimiento, stock_target
 
 
 def register_waste(item_type, cantidad, motivo, product_id=None, raw_material_id=None, fecha=None,
@@ -34,10 +34,14 @@ def register_waste(item_type, cantidad, motivo, product_id=None, raw_material_id
     db.session.add(waste)
     db.session.flush()
 
+    if item_type == "product":
+        target, factor = stock_target(product_id)     # trozo -> descuenta de la torta base
+    else:
+        target, factor = raw_material_id, 1.0
     registrar_movimiento(
         item_type,
-        product_id if item_type == "product" else raw_material_id,
-        -abs(cantidad),
+        target,
+        -abs(cantidad) * factor,
         tipo.lower(),                      # 'merma' | 'regalo' | 'muestra'
         referencia_tipo="waste",
         referencia_id=waste.id,

@@ -8,7 +8,7 @@
       <tr><th>Nombre</th><th>Estado</th><th>Precio</th><th>Costo u.</th><th>Margen</th><th>Stock</th><th></th></tr>
       {% for f in filas %}
       <tr>
-        <td>{{ f.product.nombre }}</td>
+        <td>{{ f.product.nombre }}{% if f.nota %}<br><span style="color:var(--muted); font-size:12px">{{ f.nota }}</span>{% endif %}</td>
         <td>
           {% set cls = {'GANADOR':'verde','POTENCIAL':'amarillo','REVISAR':'naranja','PAUSADO':'gris'}[f.product.estado] %}
           <span class="badge {{ cls }}">{{ f.product.estado }}</span>
@@ -16,7 +16,7 @@
         <td>${{ '{:,.0f}'.format(f.product.precio_venta) }}</td>
         <td>{% if f.margen.costo_unitario is not none %}${{ '{:,.0f}'.format(f.margen.costo_unitario) }}{% else %}<span class="empty">sin receta</span>{% endif %}</td>
         <td>{% if f.margen.margen_pct is not none %}{{ f.margen.margen_pct }}%{% else %}—{% endif %}</td>
-        <td>{{ f.stock|round(1) }} {{ f.product.unidad_venta }}</td>
+        <td>{{ f.stock|round(1) }} {{ f.product.unidad_venta }}{% if f.product.base_id %}<br><span style="color:var(--muted); font-size:12px">(stock compartido)</span>{% endif %}</td>
         <td class="pill-actions">
           <a class="btn small secondary" href="{{ url_for('products.editar', product_id=f.product.id) }}">Editar</a>
           <a class="btn small secondary" href="{{ url_for('products.receta', product_id=f.product.id) }}">Receta</a>

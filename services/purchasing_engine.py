@@ -55,7 +55,8 @@ def calculate_material_requirement(horizon_days=None):
         cantidad_producir = s["produccion_sugerida"]
         if cantidad_producir <= 0:
             continue
-        recipe = Recipe.query.filter_by(product_id=s["product_id"]).first()
+        prod = Product.query.get(s["product_id"])
+        recipe = prod.effective_recipe if prod is not None else None
         if not recipe or not recipe.rendimiento:
             continue
         factor = cantidad_producir / recipe.rendimiento

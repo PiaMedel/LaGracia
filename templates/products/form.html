@@ -25,6 +25,24 @@
         <select name="activo"><option value="1" {% if producto.activo %}selected{% endif %}>Sí</option><option value="" {% if not producto.activo %}selected{% endif %}>No</option></select>
       </div>
       {% endif %}
+      <div class="full" style="border-top:1px solid var(--line); padding-top:10px">
+        <strong>¿Comparte el stock con otro producto? (opcional)</strong>
+        <p style="color:var(--muted); font-size:13px; margin:4px 0 0">
+          Sirve para vender lo mismo bajo distintos nombres o formatos, con <u>ventas y precio propios</u> pero <u>un solo stock y una sola receta</u>.
+          Ejemplos: <em>Torta Retail</em> comparte el stock de <em>Torta</em> (equivale a 1). <em>Trozo de torta</em> comparte el stock de <em>Torta</em> (equivale a 8:
+          8 trozos = 1 torta). Estos productos no se producen por separado ni tienen stock propio.
+        </p>
+      </div>
+      <div>
+        <label>Comparte el stock de…</label>
+        <select name="base_id"><option value="">— ninguno (stock propio) —</option>
+          {% for o in otros %}<option value="{{ o.id }}" {% if producto and producto.base_id == o.id %}selected{% endif %}>{{ o.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>…y 1 de ese producto equivale a cuántos de este (Retail: 1 · Trozo: 8)</label>
+        <input name="unidades_por_base" inputmode="decimal" value="{{ producto.unidades_por_base|int if producto and producto.unidades_por_base and producto.unidades_por_base == producto.unidades_por_base|int else (producto.unidades_por_base if producto and producto.unidades_por_base else '') }}">
+      </div>
       <div class="full"><button class="btn" type="submit">Guardar</button></div>
     </form>
   </div>

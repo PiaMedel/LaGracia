@@ -38,6 +38,7 @@ SHEETS = {
     "Productos": [
         "nombre", "categoria", "unidad_venta", "precio_venta", "estado",
         "stock_seguridad", "vida_util_dias", "stock_inicial",
+        "comparte_stock_de", "unidades_por_base",
     ],
     "Recetas pre-preparaciones": [
         "preparacion", "rendimiento", "materia_prima", "cantidad",
@@ -50,7 +51,7 @@ SHEETS = {
 EXAMPLES = {
     "Materias primas": ["(ejemplo) Harina almendras", "kg", 6000, 2, 2, 3, 10, "Proveedor A", 180, 5],
     "Pre-preparaciones": ["(ejemplo) Masa base brownie", "porción", 6, 90, 2, 0],
-    "Productos": ["(ejemplo) Brownie", "Bizcochería", "unidad", 4000, "POTENCIAL", 5, 5, 0],
+    "Productos": ["(ejemplo) Brownie", "Bizcochería", "unidad", 4000, "POTENCIAL", 5, 5, 0, "", ""],
     "Recetas pre-preparaciones": ["(ejemplo) Masa base brownie", 12, "Cacao", 0.1],
     "Recetas productos": ["(ejemplo) Brownie", 12, "Materia prima", "Harina almendras", 0.3],
 }
@@ -64,6 +65,9 @@ LEGEND = [
     "4. UNIDADES: la cantidad de una receta va en la MISMA unidad de la materia prima. Si la harina está en kg, 300 g se escribe 0.3 (o 0,3).",
     "5. 'rendimiento' = cuántas unidades produce UNA tanda de la receta (la cantidad de ingredientes es por esa tanda completa).",
     "6. 'tipo_ingrediente' en Recetas productos: escribe 'Materia prima' o 'Pre-preparación'.",
+    "   Productos que COMPARTEN STOCK: en 'comparte_stock_de' el producto base y en 'unidades_por_base' cuántos de este producto equivalen a 1 del base.",
+    "     Ejemplos: Torta Retail → comparte_stock_de = Torta, unidades_por_base = 1. Trozo de torta → comparte_stock_de = Torta, unidades_por_base = 8.",
+    "     Tienen ventas y precio propios, pero no stock, receta ni producción propios (se descuenta del base). NO les pongas receta en la hoja de recetas.",
     "7. 'estado' de producto: GANADOR, POTENCIAL, REVISAR o PAUSADO (si lo dejas vacío queda POTENCIAL).",
     "8. 'stock_inicial': déjalo vacío o en 0. El stock real de hoy se fija al final, con la pantalla 'Conteo' de la app (así no se cuenta doble con el historial).",
     "9. Puedes volver a subir el archivo corregido: lo que ya existe se actualiza, no se duplica. Las recetas se reemplazan completas.",
@@ -79,6 +83,9 @@ LEGEND_SIMPLE = [
     "4. UNIDADES: la cantidad de una receta va en la MISMA unidad de la materia prima. Si la harina está en kg, 300 g se escribe 0.3 (o 0,3).",
     "5. 'rendimiento' = cuántas unidades produce UNA tanda de la receta (la cantidad de ingredientes es por esa tanda completa).",
     "6. Una receta ocupa varias filas: una por ingrediente, repitiendo el nombre del producto y el rendimiento.",
+    "   Productos que COMPARTEN STOCK: en 'comparte_stock_de' el producto base y en 'unidades_por_base' cuántos de este producto equivalen a 1 del base.",
+    "     Ejemplos: Torta Retail → comparte_stock_de = Torta, unidades_por_base = 1. Trozo de torta → comparte_stock_de = Torta, unidades_por_base = 8.",
+    "     Tienen ventas y precio propios, pero no stock, receta ni producción propios (se descuenta del base). NO les pongas receta en la hoja de recetas.",
     "7. 'estado' de producto: GANADOR, POTENCIAL, REVISAR o PAUSADO (si lo dejas vacío queda POTENCIAL).",
     "8. 'stock_inicial': déjalo vacío o en 0. El stock real de hoy se fija al final, con la pantalla 'Conteo' de la app (así no se cuenta doble con el historial).",
     "9. Puedes volver a subir el archivo corregido: lo que ya existe se actualiza, no se duplica. Las recetas se reemplazan completas.",
@@ -245,7 +252,9 @@ def _import_preparations(rows, res):
 
 
 def _import_products(rows, res):
+    from services.product_links import apply_links
     existing = {p.nombre.strip().lower(): p for p in Product.query.all()}
+    vinculos = []
     for idx, r in rows:
         try:
             nombre = _txt(r.get("nombre"))
@@ -267,12 +276,31 @@ def _import_products(rows, res):
             _set_if(p, "vida_util_dias", _int(r.get("vida_util_dias")))
             db.session.flush()
             stock = _num(r.get("stock_inicial"))
-            if nuevo and stock:
+            es_vinculado = bool(_txt(r.get("comparte_stock_de")))
+            if nuevo and stock and not es_vinculado:
                 registrar_movimiento("product", p.id, stock, "stock_inicial", commit=False)
             existing[nombre.lower()] = p
+            vinculos.append((idx, p, _txt(r.get("comparte_stock_de")), _num(r.get("unidades_por_base"))))
             res["creados" if nuevo else "actualizados"] += 1
         except Exception as e:  # noqa: BLE001
             res["errores"].append(f"Productos, fila {idx}: {e}")
+
+    # segunda pasada: el producto base puede aparecer más abajo en la hoja
+    for idx, p, base_n, unidades in vinculos:
+        try:
+            if not base_n:
+                if p.base_id:      # la fila ya no declara vínculo: vuelve a ser independiente
+                    apply_links(p, None, None)
+                continue
+            bs = existing.get(base_n.lower())
+            if bs is None:
+                raise ValueError(f"'comparte_stock_de': el producto '{base_n}' no existe")
+            with db.session.begin_nested():
+                err = apply_links(p, bs, unidades)
+                if err:
+                    raise ValueError(err)
+        except Exception as e:  # noqa: BLE001
+            res["errores"].append(f"Productos, fila {idx} ('{p.nombre}'): no se aplicó 'comparte stock': {e}")
 
 
 def _group(rows, key):
@@ -337,6 +365,8 @@ def _import_product_recipes(rows, res):
             prod = prods.get(name.lower())
             if prod is None:
                 raise ValueError(f"el producto '{name}' no existe (créalo en la hoja Productos)")
+            if prod.base_id:
+                raise ValueError(f"'{name}' comparte el stock y la receta de '{prod.base.nombre}': no lleva receta propia (quita estas filas, o quita 'comparte_stock_de')")
             rendimiento = next((_num(r.get("rendimiento")) for _, r in items if _num(r.get("rendimiento"))), None)
             if not rendimiento:
                 raise ValueError("falta el rendimiento")

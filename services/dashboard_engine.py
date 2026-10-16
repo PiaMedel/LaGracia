@@ -260,11 +260,13 @@ def build_simple_hoy():
     materias.sort(key=lambda r: (r["nivel"] != "rojo", -r["comprar"]))
 
     # --- Orden pendiente: productos activos sin receta (no descuentan materias primas)
-    con_receta = {r.product_id for r in Recipe.query.all() if r.items}
-    sin_receta = [
-        p.nombre for p in Product.query.filter_by(activo=True).order_by(Product.nombre).all()
-        if p.id not in con_receta and p.estado != "PAUSADO"
-    ]
+    sin_receta = []
+    for p in Product.query.filter_by(activo=True).order_by(Product.nombre).all():
+        if p.base_id or p.estado == "PAUSADO":
+            continue   # las fracciones usan la receta de su producto base
+        r = p.effective_recipe
+        if r is None or not r.items:
+            sin_receta.append(p.nombre)
 
     vencimientos = all_expiry_alerts()
     mermas_altas = calculate_waste_alerts()

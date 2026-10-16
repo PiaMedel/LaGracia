@@ -44,8 +44,14 @@ def calculate_recipe_cost(recipe):
 
 
 def calculate_unit_cost(product):
-    """Costo unitario de un producto, a partir de su receta."""
-    recipe = product.recipe
+    """Costo unitario de un producto, a partir de su receta (propia o compartida).
+    Una fracción (trozo) cuesta el costo del producto base dividido en sus unidades."""
+    if getattr(product, "base_id", None) and product.base is not None:
+        costo_base = calculate_unit_cost(product.base)
+        if costo_base is None or not product.unidades_por_base:
+            return None
+        return round(costo_base / product.unidades_por_base, 2)
+    recipe = product.effective_recipe
     if recipe is None or not recipe.rendimiento:
         return None
     costo_receta = calculate_recipe_cost(recipe)

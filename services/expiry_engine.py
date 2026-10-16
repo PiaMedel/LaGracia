@@ -72,7 +72,7 @@ def expiry_alerts_for_products():
     from services.inventory_engine import calculate_product_stock
     alertas = []
     for p in Product.query.filter_by(activo=True).all():
-        if calculate_product_stock(p.id) <= 0:
+        if p.base_id or calculate_product_stock(p.id) <= 0:
             continue
         info = check_item_expiry("product", p.id, p.vida_util_dias)
         if info:

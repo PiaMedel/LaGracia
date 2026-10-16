@@ -6,8 +6,22 @@ from models.preparations import Preparation
 from models.recipes import Recipe, RecipeItem
 from services.costing_engine import calculate_margin
 from services.inventory_engine import calculate_product_stock, registrar_movimiento
+from services.product_links import apply_links
 
 bp = Blueprint("products", __name__, url_prefix="/productos")
+
+
+def _vinculo_del_form():
+    """Lee 'comparte el stock de…' y la equivalencia desde el formulario."""
+    v = request.form.get("base_id")
+    base = db.session.get(Product, int(v)) if v else None
+    u = (request.form.get("unidades_por_base") or "").strip().replace(",", ".")
+    return base, (float(u) if u else None)
+
+
+def _otros_productos(excluir_id=None):
+    q = Product.query.filter_by(activo=True).order_by(Product.nombre)
+    return [x for x in q.all() if x.id != excluir_id]
 
 
 @bp.route("/")
@@ -16,10 +30,16 @@ def listar():
     filas = []
     for p in productos:
         margen = calculate_margin(p)
+        nota = None
+        if p.base is not None:
+            u = p.unidades_por_base or 1
+            nota = (f"comparte el stock y la receta de «{p.base.nombre}»" if u == 1
+                    else f"= 1/{u:g} de «{p.base.nombre}» (comparte su stock y receta)")
         filas.append({
             "product": p,
             "stock": calculate_product_stock(p.id),
             "margen": margen,
+            "nota": nota,
         })
     return render_template("products/list.html", filas=filas)
 
@@ -38,13 +58,19 @@ def nuevo():
         )
         db.session.add(p)
         db.session.flush()
+        base, unidades = _vinculo_del_form()
+        error = apply_links(p, base, unidades)
+        if error:
+            db.session.rollback()
+            flash(f"No se creó el producto: {error}", "danger")
+            return redirect(url_for("products.nuevo"))
         stock_inicial = float(request.form.get("stock_inicial") or 0)
-        if stock_inicial:
+        if stock_inicial and p.base_id is None:
             registrar_movimiento("product", p.id, stock_inicial, "stock_inicial", commit=False)
         db.session.commit()
         flash(f"Producto '{p.nombre}' creado.", "success")
         return redirect(url_for("products.listar"))
-    return render_template("products/form.html", producto=None, estados=ESTADOS_PRODUCTO)
+    return render_template("products/form.html", producto=None, estados=ESTADOS_PRODUCTO, otros=_otros_productos())
 
 
 @bp.route("/<int:product_id>/editar", methods=["GET", "POST"])
@@ -59,15 +85,25 @@ def editar(product_id):
         p.stock_seguridad = float(request.form.get("stock_seguridad") or 0)
         p.vida_util_dias = int(request.form["vida_util_dias"]) if request.form.get("vida_util_dias") else None
         p.activo = bool(request.form.get("activo"))
+        base, unidades = _vinculo_del_form()
+        error = apply_links(p, base, unidades)
+        if error:
+            db.session.rollback()
+            flash(f"No se guardaron los cambios: {error}", "danger")
+            return redirect(url_for("products.editar", product_id=product_id))
         db.session.commit()
         flash(f"Producto '{p.nombre}' actualizado.", "success")
         return redirect(url_for("products.listar"))
-    return render_template("products/form.html", producto=p, estados=ESTADOS_PRODUCTO)
+    return render_template("products/form.html", producto=p, estados=ESTADOS_PRODUCTO, otros=_otros_productos(p.id))
 
 
 @bp.route("/<int:product_id>/receta", methods=["GET", "POST"])
 def receta(product_id):
     p = Product.query.get_or_404(product_id)
+    if p.base is not None:
+        flash(f"«{p.nombre}» comparte el stock y la receta de «{p.base.nombre}». Para cambiar la receta, edita la de «{p.base.nombre}» "
+              "(o quita el vínculo en Editar).", "warning")
+        return redirect(url_for("products.listar"))
     recipe = p.recipe
 
     if request.method == "POST":
